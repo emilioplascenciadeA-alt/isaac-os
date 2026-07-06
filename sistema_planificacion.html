@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Base — Abril 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0e0e;--bg2:#151515;--bg3:#1c1c1c;--bg4:#242424;
+  --line:#232323;--line2:#2e2e2e;--line3:#3a3a3a;
+  --tx:#f0ede8;--tx2:#8a8784;--tx3:#4e4c4a;
+  --acc:#c9f060;--acc2:#7ff0c0;--acc3:rgba(201,240,96,.08);--acc4:rgba(201,240,96,.18);
+  --warn:#f0a040;--warn2:rgba(240,160,64,.1);
+  --err:#e05050;--err2:rgba(224,80,80,.1);
+  --teal:#2aaa80;--coral:#cc6644;--violet:#8878d8;
+  --r:10px;--rs:6px
+}
+html{background:var(--bg)}
+body{color:var(--tx);font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;min-height:100vh}
+.app{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+
+/* Sidebar */
+.sb{background:var(--bg2);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.sb-brand{padding:1.5rem 1.25rem;border-bottom:1px solid var(--line)}
+.sb-tag{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--tx3);margin-bottom:5px}
+.sb-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--tx);line-height:1.35}
+.sb-month{font-size:10px;color:var(--acc);margin-top:3px;letter-spacing:.06em}
+.sb-nav{flex:1;padding:.75rem .5rem;overflow-y:auto}
+.nb{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rs);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;font-family:'DM Mono',monospace;font-size:11px;color:var(--tx2);margin-bottom:1px;transition:all .15s}
+.nb:hover{background:var(--bg3);color:var(--tx)}
+.nb.on{background:var(--bg3);color:var(--acc)}
+.ndot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.7}
+.sb-foot{padding:1rem 1.25rem;border-top:1px solid var(--line);font-size:10px;color:var(--tx3);line-height:1.7}
+.save-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:calc(100% - 1rem);margin:.75rem .5rem 0;padding:9px 12px;border-radius:var(--rs);border:1px solid rgba(201,240,96,.3);background:var(--acc3);color:var(--acc);font-family:'DM Mono',monospace;font-size:11px;font-weight:500;cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.save-btn:hover{background:var(--acc4);border-color:rgba(201,240,96,.5)}
+.save-btn.saved{border-color:rgba(127,240,192,.4);background:rgba(127,240,192,.08);color:var(--acc2)}
+.save-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7;transition:all .2s}
+.unsaved-dot{width:6px;height:6px;border-radius:50%;background:var(--warn);opacity:.9;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:.9;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+
+/* Main */
+.main{overflow-y:auto}
+.wrap{max-width:760px;margin:0 auto;padding:2.5rem 2rem}
+.panel{display:none}.panel.act{display:block;animation:fi .18s ease}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* Page header */
+.ph{margin-bottom:2rem}
+.ptag{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc);margin-bottom:5px}
+.ptit{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--tx);line-height:1.15}
+.psub{font-size:11px;color:var(--tx2);margin-top:6px}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:1.25rem 1.4rem;margin-bottom:.875rem}
+.clbl{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--tx3);margin-bottom:9px}
+.crow{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.crow .clbl{margin-bottom:0}
+
+/* Metrics */
+.mgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.mbox{background:var(--bg3);border:1px solid var(--line2);border-radius:var(--rs);padding:11px 13px}
+.mlbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.mval{font-family:'Syne',sans-serif;font-size:21px;font-weight:700;color:var(--tx);display:flex;align-items:baseline;gap:3px}
+.mval input{background:transparent;border:none;outline:none;font-family:'Syne',sans-serif;font-size:21px;font-weight:700;color:var(--tx);width:70px}
+.mval input::placeholder{color:var(--tx3)}
+.mden{font-size:11px;color:var(--tx3);font-weight:400;font-family:'DM Mono',monospace}
+.pbar{height:2px;background:var(--line2);border-radius:1px;margin-top:8px}
+.pfill{height:100%;border-radius:1px;background:var(--acc);transition:width .3s}
+
+/* Rule rows */
+.rrow{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.rrow:last-child{border:none;padding-bottom:0}
+.rn{font-size:10px;color:var(--acc);min-width:18px;padding-top:2px}
+.rb{font-size:12px;color:var(--tx);line-height:1.6;flex:1}
+
+/* Antidote */
+.anti{border-left:2px solid var(--warn);background:var(--warn2);padding:9px 13px;border-radius:0 var(--rs) var(--rs) 0;margin-top:8px}
+.atag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-bottom:3px}
+.aex{font-size:11px;color:var(--tx2);margin-bottom:3px;font-style:italic}
+.afix{font-size:12px;color:var(--tx);line-height:1.5}
+
+/* Weekly */
+.wobj{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;font-style:italic;color:var(--tx);border-left:2px solid var(--acc2);padding:9px 13px;background:var(--bg3);border-radius:0 var(--rs) var(--rs) 0;line-height:1.6;margin-bottom:.875rem}
+.blind{background:var(--err2);border-left:2px solid var(--err);padding:9px 13px;font-size:12px;color:#ff9a9a;line-height:1.6;border-radius:0 var(--rs) var(--rs) 0}
+.trow{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.trow:last-child{border:none}
+.trow:hover{opacity:.85}
+.cb{width:17px;height:17px;border:1px solid var(--line3);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;color:var(--bg);background:var(--bg3);transition:all .15s;margin-top:2px}
+.cb.on{background:var(--acc);border-color:var(--acc)}
+.ttxt{font-size:12px;color:var(--tx);line-height:1.5;flex:1}
+.ttxt.done{text-decoration:line-through;color:var(--tx3)}
+.resrow{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.resrow:last-child{border:none}
+.resn{font-size:10px;color:var(--tx3);min-width:14px}
+.resin{flex:1;background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--tx)}
+.resin::placeholder{color:var(--tx3)}
+
+/* Edit controls */
+.ebtn{font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:var(--rs);border:1px solid var(--line3);background:transparent;color:var(--tx3);cursor:pointer;transition:all .15s;font-family:'DM Mono',monospace;white-space:nowrap}
+.ebtn:hover{color:var(--acc);border-color:rgba(201,240,96,.3);background:var(--acc3)}
+.ebtn.on{color:var(--acc);border-color:rgba(201,240,96,.3);background:var(--acc3)}
+.ibtn{width:20px;height:20px;border-radius:4px;border:1px solid var(--line2);background:transparent;color:var(--tx3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s;flex-shrink:0;font-family:'DM Mono',monospace}
+.ibtn:hover{border-color:var(--line3);color:var(--tx)}
+.ibtn.del:hover{border-color:rgba(224,80,80,.4);color:var(--err);background:var(--err2)}
+.ibtn.mv:hover{border-color:rgba(201,240,96,.3);color:var(--acc)}
+.addrow{display:flex;gap:8px;align-items:center;padding:8px 0;margin-top:3px;border-top:1px dashed var(--line3)}
+.addinp{flex:1;background:transparent;border:none;outline:none;font-size:12px;color:var(--tx);font-family:'DM Mono',monospace}
+.addinp::placeholder{color:var(--tx3)}
+.addbtn{font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:var(--rs);border:1px solid rgba(201,240,96,.25);background:var(--acc3);color:var(--acc);cursor:pointer;font-family:'DM Mono',monospace;transition:all .15s;white-space:nowrap}
+.addbtn:hover{background:var(--acc4)}
+.einp{flex:1;background:transparent;border:none;border-bottom:1px solid rgba(201,240,96,.2);outline:none;font-size:12px;color:var(--tx);font-family:'DM Mono',monospace;padding-bottom:1px}
+.einp::placeholder{color:var(--tx3)}
+.einp-sm{width:56px;background:transparent;border:none;border-bottom:1px solid rgba(201,240,96,.2);outline:none;font-size:10px;color:var(--tx2);font-family:'DM Mono',monospace;padding-bottom:1px;flex-shrink:0}
+.einp-sm::placeholder{color:var(--tx3)}
+.iactions{display:flex;gap:4px;align-items:center;flex-shrink:0}
+
+/* Nodos */
+.ncard{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);margin-bottom:.875rem;overflow:hidden}
+.nhdr{display:flex;align-items:center;gap:10px;padding:11px 1.4rem;border-bottom:1px solid var(--line)}
+.npip{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.nttl{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--tx);flex:1}
+.nhr-lbl{font-size:10px;color:var(--tx3)}
+.nbody{padding:0 1.4rem}
+
+/* Normal act row: num | time | name | S | N */
+.arow{display:grid;grid-template-columns:22px 52px 1fr 26px 26px;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.arow:last-child{border:none}
+.an{font-size:10px;color:var(--tx3);text-align:right}
+.ahr{font-size:10px;color:var(--tx3)}
+.aname{font-size:12px;color:var(--tx);line-height:1.4}
+.abtn{width:24px;height:24px;border-radius:50%;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;color:var(--tx3);transition:all .15s;background:var(--bg3);user-select:none}
+.abtn:hover{border-color:var(--line3);color:var(--tx)}
+.abtn.si{background:rgba(127,240,192,.12);border-color:var(--acc2);color:var(--acc2)}
+.abtn.no{background:var(--err2);border-color:var(--err);color:var(--err)}
+
+/* Edit act row: num | time-input | name-input | actions */
+.arow-e{display:grid;grid-template-columns:22px 58px 1fr auto;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.arow-e:last-child{border:none}
+
+/* Mission */
+.mbox2{background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r);padding:1.2rem 1.4rem;margin-bottom:.875rem;position:relative;overflow:hidden}
+.mbox2::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--acc),transparent)}
+.mlbl2{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin-bottom:7px}
+.min2{width:100%;background:transparent;border:none;outline:none;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--tx);resize:none;line-height:1.6;min-height:40px}
+.min2::placeholder{color:var(--tx3);font-weight:400;font-style:italic}
+
+/* Date bar */
+.dbar{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap}
+.din{background:var(--bg3);border:1px solid var(--line2);border-radius:var(--rs);padding:7px 11px;font-family:'DM Mono',monospace;font-size:12px;color:var(--tx);outline:none;color-scheme:dark;transition:border-color .15s}
+.din:focus{border-color:rgba(201,240,96,.3)}
+.dcnt{font-size:11px;color:var(--tx3)}
+.dcnt span{color:var(--acc)}
+
+/* Day metrics */
+.dmg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dm{background:var(--bg3);border:1px solid var(--line2);border-radius:var(--rs);padding:10px 12px}
+.dml{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.dmi{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line2);outline:none;font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--tx);padding-bottom:2px}
+.dmi::placeholder{color:var(--tx3)}
+.trnrow{display:flex;gap:6px;margin-top:5px}
+.trnbtn{flex:1;padding:5px;font-size:11px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--bg3);color:var(--tx2);cursor:pointer;transition:all .15s;font-family:'DM Mono',monospace}
+.trnbtn.si{background:rgba(127,240,192,.1);border-color:var(--acc2);color:var(--acc2)}
+.trnbtn.no{background:var(--err2);border-color:var(--err);color:var(--err)}
+.evrow{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.evbtn{flex:1;padding:9px;font-size:11px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--bg3);color:var(--tx2);cursor:pointer;transition:all .15s;font-family:'DM Mono',monospace}
+.evbtn:hover{border-color:var(--line3);color:var(--tx)}
+.evbtn.si{background:rgba(127,240,192,.1);border-color:var(--acc2);color:var(--acc2)}
+.evbtn.no{background:var(--err2);border-color:var(--err);color:var(--err)}
+
+/* Habits */
+.hscroll{overflow-x:auto;padding-bottom:4px}
+.htbl{border-collapse:collapse;font-size:11px;min-width:720px;width:100%}
+.htbl th{text-align:center;padding:5px 2px;font-size:9px;font-weight:400;color:var(--tx3);border-bottom:1px solid var(--line);letter-spacing:.05em}
+.htbl th.hn{text-align:left;padding-left:0;min-width:145px}
+.htbl td{text-align:center;padding:2px;border-bottom:1px solid var(--line)}
+.htbl tr:last-child td{border-bottom:none}
+.hnc{font-size:11px;color:var(--tx2);text-align:left;padding-left:0}
+.hcell{width:20px;height:20px;border-radius:3px;margin:0 auto;cursor:pointer;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--tx3);transition:all .1s;background:var(--bg3);user-select:none}
+.hcell:hover{border-color:var(--line3)}
+.hcell.ok{background:rgba(127,240,192,.12);border-color:var(--acc2);color:var(--acc2)}
+.hcell.fail{background:var(--err2);border-color:var(--err);color:var(--err)}
+.hnc-inp{background:transparent;border:none;border-bottom:1px solid rgba(201,240,96,.2);outline:none;font-size:11px;color:var(--tx);font-family:'DM Mono',monospace;width:100%}
+
+/* Habit summary */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sbox{background:var(--bg3);border:1px solid var(--line2);border-radius:var(--rs);padding:10px;text-align:center}
+.sn{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--tx)}
+.sl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
+
+/* Rules */
+.rsys{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.rsys:last-child{border:none;padding-bottom:0}
+.rsn{font-size:10px;color:var(--acc);min-width:14px;padding-top:1px}
+.rst{font-size:12px;color:var(--tx);line-height:1.6}
+.fq{background:var(--acc3);border:1px solid rgba(201,240,96,.15);border-radius:var(--r);padding:1.4rem;text-align:center;margin-top:1rem}
+.fqsub{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx3);margin-bottom:8px}
+.fqq{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--tx);font-style:italic;line-height:1.5}
+.fqc{font-size:11px;color:var(--tx2);margin-top:8px}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line3);border-radius:2px}
+
+@media(max-width:640px){
+  .app{grid-template-columns:1fr}
+  .sb{position:relative;height:auto;flex-direction:row;border-right:none;border-bottom:1px solid var(--line)}
+  .sb-brand,.sb-foot{display:none}
+  .sb-nav{display:flex;padding:.4rem;overflow-x:auto}
+  .nb{white-space:nowrap;flex-shrink:0}
+  .wrap{padding:1.25rem 1rem}
+  .mgrid,.dmg,.sgrid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<nav class="sb">
+  <div class="sb-brand">
+    <div class="sb-tag">Sistema /01</div>
+    <div class="sb-name">Me levanto para ser alguien confiable</div>
+    <div class="sb-month">Abril 2026</div>
+  </div>
+  <div class="sb-nav">
+    <button class="nb on" onclick="go('mensual',this)"><span class="ndot"></span>01 Mensual</button>
+    <button class="nb" onclick="go('semanal',this)"><span class="ndot"></span>02 Semanal</button>
+    <button class="nb" onclick="go('diario',this)"><span class="ndot"></span>03 Diario</button>
+    <button class="nb" onclick="go('habitos',this)"><span class="ndot"></span>04 Hábitos</button>
+    <button class="nb" onclick="go('reglas',this)"><span class="ndot"></span>05 Reglas</button>
+  </div>
+  <button class="save-btn" id="save-btn" onclick="manualSave()">
+    <span class="save-dot" id="save-dot"></span>
+    <span id="save-label">Guardar</span>
+  </button>
+  <div class="sb-foot">El sistema manda.<br>No el estado emocional.</div>
+</nav>
+
+<main class="main">
+<div class="wrap">
+
+<!-- MENSUAL -->
+<div id="panel-mensual" class="panel act">
+  <div class="ph">
+    <div class="ptag">Plantilla 01 — Mensual</div>
+    <div class="ptit">Abril 2026</div>
+    <div class="psub">Doy más y mejor · Actúo simple y efectivo</div>
+  </div>
+  <div class="card">
+    <div class="clbl">Foco único del mes</div>
+    <div style="font-size:13px;color:var(--tx);line-height:1.7;margin-bottom:10px">Mejoro los aspectos que fallaron. Actúo simple y efectivo. Enfoco en acciones importantes. Quito distracciones. Los tiempos y mi energía están bien distribuidos.</div>
+    <div style="font-size:11px;color:var(--tx2);font-style:italic;line-height:1.6">Si todo sale bien → confianza visible en acciones ordenadas con intención. Ingresos que dan calma para decidir cómo invertir en mi crecimiento.</div>
+  </div>
+  <div class="card">
+    <div class="clbl">Reglas no negociables</div>
+    <div class="rrow"><div class="rn">01</div><div class="rb">Horario fijo de sueño — no más de 10:30 PM. (7–9 h diarias)</div></div>
+    <div class="rrow"><div class="rn">02</div><div class="rb">Ingresos mínimos $150/día → $1,050/semana → $4,500/mes. Stretch: $6,000.</div></div>
+    <div class="rrow"><div class="rn">03</div><div class="rb">Ejercicio 60–90 min diarios para crecimiento muscular. Alimentación alineada al objetivo.</div></div>
+    <div class="rrow"><div class="rn">04</div><div class="rb">Reviso y actúo sobre el plan dos veces al día: 6:00 AM y 10:15 PM.</div></div>
+  </div>
+  <div class="card">
+    <div class="clbl">Métricas clave del mes</div>
+    <div class="mgrid">
+      <div class="mbox"><div class="mlbl">Días cumplidos</div><div class="mval"><input type="number" id="m-dias" placeholder="0" min="0" max="30" oninput="sv();upProg()"><span class="mden">/ 30</span></div><div class="pbar"><div class="pfill" id="pd" style="width:0%"></div></div></div>
+      <div class="mbox"><div class="mlbl">Ingresos logrados</div><div class="mval"><span class="mden">$</span><input type="number" id="m-ing" placeholder="0" oninput="sv();upProg()"><span class="mden">/ 6,000</span></div><div class="pbar"><div class="pfill" id="pi" style="width:0%"></div></div></div>
+      <div class="mbox"><div class="mlbl">Peso inicial → final</div><div class="mval"><span class="mden" style="font-size:13px">61 kg →</span><input type="number" id="m-peso" placeholder="—" style="width:55px"><span class="mden">kg</span></div></div>
+      <div class="mbox"><div class="mlbl">Gastos acumulados</div><div class="mval"><span class="mden">$</span><input type="number" id="m-gas" placeholder="0" oninput="sv()"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="clbl">Antídotos de autoengaño</div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:8px;font-style:italic">Excusa recurrente: "puedo improvisar, hago las cosas mejor bajo presión."</div>
+    <div class="anti"><div class="atag">Excusa 1</div><div class="aex">"Tengo tiempo, no hay prisa."</div><div class="afix">→ Tiempos fijos por actividad. Sin opción de fallar.</div></div>
+    <div class="anti" style="margin-top:8px"><div class="atag">Excusa 2</div><div class="aex">"Estoy cansado, descanso en el celular."</div><div class="afix">→ Celular en otro cuarto hasta terminar la tarea del momento.</div></div>
+  </div>
+</div>
+
+<!-- SEMANAL -->
+<div id="panel-semanal" class="panel">
+  <div class="ph">
+    <div class="ptag">Plantilla 02 — Semanal</div>
+    <div class="ptit" id="sem-titulo">Semana #1</div>
+    <div class="psub" id="sem-fechas">Fechas: —</div>
+  </div>
+
+  <!-- Objetivo de la semana -->
+  <div class="card">
+    <div class="crow">
+      <div class="clbl">Objetivo de la semana</div>
+      <button class="ebtn" id="wobj-btn" onclick="toggleWOBJ()">Editar</button>
+    </div>
+    <div id="wobj-view" class="wobj">"Domino y controlo mis impulsos. Lo que no se alimenta se muere. Utilizo mi inteligencia para tomar las mejores decisiones."</div>
+    <textarea id="wobj-edit" class="resin" rows="3" style="display:none;width:100%;resize:none;padding:4px 0;font-size:13px;font-style:italic" oninput="sv()"></textarea>
+  </div>
+
+  <!-- Tareas estructurales -->
+  <div class="card">
+    <div class="crow">
+      <div class="clbl">Tareas estructurales obligatorias</div>
+      <button class="ebtn" id="wte-btn" onclick="toggleWTE()">Editar</button>
+    </div>
+    <div id="wte-list"></div>
+    <div class="addrow" id="wte-add" style="display:none">
+      <input class="addinp" id="wte-inp" placeholder="Nueva tarea estructural..." onkeydown="if(event.key==='Enter')addWT()">
+      <button class="addbtn" onclick="addWT()">+ Agregar</button>
+    </div>
+  </div>
+
+  <!-- Resultados concretos -->
+  <div class="card">
+    <div class="clbl">Resultados concretos — máx. 3</div>
+    <div class="resrow"><div class="resn">1.</div><input class="resin" id="r1" placeholder="Ej: 42 h de sueño de calidad" oninput="sv()"></div>
+    <div class="resrow"><div class="resn">2.</div><input class="resin" id="r2" placeholder="Ej: Ingreso total +$1,500" oninput="sv()"></div>
+    <div class="resrow"><div class="resn">3.</div><input class="resin" id="r3" placeholder="Ej: Todas las tareas y asistencias" oninput="sv()"></div>
+  </div>
+
+  <!-- Punto ciego -->
+  <div class="card">
+    <div class="crow">
+      <div class="clbl">Punto ciego a vigilar</div>
+      <button class="ebtn" id="pciego-btn" onclick="togglePCiego()">Editar</button>
+    </div>
+    <div id="pciego-view" class="blind">Querer hacer más en lugar de cumplir lo básico. Usar el cansancio como pretexto. Evitar que contratiempos rompan el sistema — ajustar y continuar.</div>
+    <textarea id="pciego-edit" class="resin" rows="3" style="display:none;width:100%;resize:none;padding:4px 0;font-size:12px;color:#ff9a9a" oninput="sv()"></textarea>
+  </div>
+</div>
+
+<!-- DIARIO -->
+<div id="panel-diario" class="panel">
+  <div class="ph">
+    <div class="ptag">Plantilla 03 — Diario</div>
+    <div class="ptit">Ejecución por nodos</div>
+    <div class="psub">Si la misión crítica no se cumple, el día no cuenta</div>
+  </div>
+
+  <!-- Date + edit toggle -->
+  <div class="dbar">
+    <input class="din" type="date" id="fecha" oninput="sv();upDay()">
+    <div class="dcnt">Día <span id="dayn">—</span> / 30</div>
+    <button class="ebtn" id="ne-btn" onclick="toggleNE()" style="margin-left:auto">Editar nodos</button>
+  </div>
+
+  <!-- Misión crítica -->
+  <div class="mbox2">
+    <div class="mlbl2">Misión crítica del día — si esto no se cumple, el día no cuenta</div>
+    <textarea class="min2" id="mision" rows="2" placeholder="Define la única acción que hace que este día cuente..." oninput="sv()"></textarea>
+  </div>
+
+  <!-- Nodo 1 -->
+  <div class="ncard">
+    <div class="nhdr">
+      <div class="npip" style="background:var(--teal)"></div>
+      <div class="nttl">Nodo 1 — Wake with intention</div>
+      <div class="nhr-lbl">5:00 AM – 1:00 PM</div>
+    </div>
+    <div class="nbody" id="n1"></div>
+  </div>
+
+  <!-- Nodo 2 -->
+  <div class="ncard">
+    <div class="nhdr">
+      <div class="npip" style="background:var(--coral)"></div>
+      <div class="nttl">Nodo 2 — Hard work</div>
+      <div class="nhr-lbl">2:00 PM – 7:00 PM</div>
+    </div>
+    <div class="nbody" id="n2"></div>
+  </div>
+
+  <!-- Nodo 3 -->
+  <div class="ncard">
+    <div class="nhdr">
+      <div class="npip" style="background:var(--violet)"></div>
+      <div class="nttl">Nodo 3 — Close clean</div>
+      <div class="nhr-lbl">8:00 PM – 10:30 PM</div>
+    </div>
+    <div class="nbody" id="n3"></div>
+  </div>
+
+  <!-- Métricas del día -->
+  <div class="card">
+    <div class="clbl">Métricas del día</div>
+    <div class="dmg" style="margin-bottom:10px">
+      <div class="dm"><div class="dml">Peso corporal kg</div><input class="dmi" type="number" id="dp" placeholder="—" oninput="sv()"></div>
+      <div class="dm"><div class="dml">Ingreso generado $</div><input class="dmi" type="number" id="di" placeholder="0" oninput="sv()"></div>
+      <div class="dm"><div class="dml">Horas de sueño</div><input class="dmi" type="number" id="ds" placeholder="—" oninput="sv()"></div>
+      <div class="dm"><div class="dml">Estudio profundo h</div><input class="dmi" type="number" id="de" placeholder="—" oninput="sv()"></div>
+      <div class="dm"><div class="dml">Calorías aprox.</div><input class="dmi" type="number" id="dc" placeholder="—" oninput="sv()"></div>
+      <div class="dm">
+        <div class="dml">Entrenamiento</div>
+        <div class="trnrow">
+          <button class="trnbtn" id="tsi" onclick="setTrn(true)">Sí</button>
+          <button class="trnbtn" id="tno" onclick="setTrn(false)">No</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evaluación -->
+    <div style="border-top:1px solid var(--line);padding-top:10px;margin-top:4px">
+      <div class="clbl" style="margin-bottom:6px">Evaluación del día</div>
+      <div class="evrow">
+        <button class="evbtn" id="esi" onclick="setEv(true)">Sí, el día cuenta ✓</button>
+        <button class="evbtn" id="eno" onclick="setEv(false)">No — lo registro igual</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notas del día -->
+  <div class="card">
+    <div class="clbl">Notas del día</div>
+    <textarea id="d-notas" class="resin" rows="4" style="width:100%;resize:none;font-size:12px;line-height:1.6" placeholder="¿Qué pasó hoy? ¿Qué ajusto mañana? Observaciones honestas..." oninput="sv()"></textarea>
+  </div>
+</div>
+
+<!-- HÁBITOS -->
+<div id="panel-habitos" class="panel">
+  <div class="ph">
+    <div class="ptag">Plantilla 04 — Hábitos</div>
+    <div class="ptit">Tracker Abril 2026</div>
+    <div class="psub">Clic = cumplido · doble = fallido · triple = vacío</div>
+  </div>
+  <div class="card">
+    <div class="crow">
+      <div class="clbl">Hábitos clave</div>
+      <button class="ebtn" id="he-btn" onclick="toggleHE()">Editar</button>
+    </div>
+    <div class="hscroll"><table class="htbl" id="htbl"></table></div>
+    <div class="addrow" id="he-add" style="display:none">
+      <input class="addinp" id="he-inp" placeholder="Nuevo hábito..." onkeydown="if(event.key==='Enter')addHabit()">
+      <button class="addbtn" onclick="addHabit()">+ Agregar</button>
+    </div>
+  </div>
+  <div class="card"><div class="clbl">Resumen del período</div><div class="sgrid" id="hsum"></div></div>
+</div>
+
+<!-- REGLAS -->
+<div id="panel-reglas" class="panel">
+  <div class="ph">
+    <div class="ptag">Plantilla 05 — Reglas</div>
+    <div class="ptit">Sistema operativo</div>
+    <div class="psub">Lee esto cada día</div>
+  </div>
+  <div class="card">
+    <div class="clbl">Reglas del sistema</div>
+    <div class="rsys"><div class="rsn">01</div><div class="rst">Si la tarea crítica no se cumple, el día NO cuenta.</div></div>
+    <div class="rsys"><div class="rsn">02</div><div class="rst">No improvises. Cumple por nodos. El sistema manda, no el estado emocional.</div></div>
+    <div class="rsys"><div class="rsn">03</div><div class="rst">Pequeño, diario, sin romper la cadena. La cadena es la meta real.</div></div>
+    <div class="rsys"><div class="rsn">04</div><div class="rst">El celular no es descanso. El descanso es programado y activo.</div></div>
+    <div class="rsys"><div class="rsn">05</div><div class="rst">Cuando quieras hacer más: vuelve a lo básico. Primero lo básico, siempre.</div></div>
+  </div>
+  <div class="fq">
+    <div class="fqsub">La pregunta de cada noche</div>
+    <div class="fqq">"¿Hoy actué como alguien confiable conmigo mismo?"</div>
+    <div class="fqc">Este sistema no busca motivarte.<br><strong>Busca que confíes en ti.</strong></div>
+  </div>
+</div>
+
+</div></main>
+</div>
+
+<script>
+// ── DEFAULTS ──────────────────────────────────────────────────────────────────
+const DEF_WT = [
+  'Duermo de 10:30 PM a 5:30 AM mínimo 5 días',
+  '4 bloques de 90 min en tareas/estudio (6 h total)',
+  'Ingresos mínimos: $300 ventas + $1,200 paseo perros',
+  'Reviso plan mañana 6 AM por 5 días',
+  'Reviso plan nocturno 10:15 PM por 5 días',
+  'Limpieza profunda cuarto/cocina 3 días',
+  'Ejercicio 5 días — hipertrofia + dieta 4 comidas/día'
+];
+const DEF_N = [
+  [ // Nodo 1
+    {h:'5:00',    n:'Despertar y agradecer'},
+    {h:'5:15',    n:'Hidratación, aseo, ropa deportiva'},
+    {h:'5:30',    n:'Paseo Kali + movilidad activa / NTC corto'},
+    {h:'6:00',    n:'Preparo lunch y desayuno'},
+    {h:'6:30',    n:'Cambiarme y salir'},
+    {h:'6:55',    n:'Llego y reviso plan de hoy'},
+    {h:'7:00',    n:'Estudio / clases'},
+    {h:'7:30',    n:'Suplementación / proteína'},
+    {h:'9:00',    n:'Desayuno fuerte'},
+    {h:'11:30',   n:'Snack'},
+    {h:'1:00 PM', n:'Salgo de la uni'}
+  ],
+  [ // Nodo 2
+    {h:'2:00 PM', n:'Cocino, como, recojo'},
+    {h:'3:30 PM', n:'Gimnasio — entrenamiento hipertrofia'},
+    {h:'5:00 PM', n:'Paseo perros 1 hora'},
+    {h:'6:00 PM', n:'Deep work 90 min / misión del día'},
+    {h:'6:45 PM', n:'Planificación del día siguiente'}
+  ],
+  [ // Nodo 3
+    {h:'8:00 PM',  n:'Cena ligera'},
+    {h:'9:00 PM',  n:'Modo avión, dejar teléfono en otro cuarto'},
+    {h:'9:30 PM',  n:'Higiene personal / ducha'},
+    {h:'10:00 PM', n:'Lectura 10–20 páginas'},
+    {h:'10:30 PM', n:'Meditación / dormir'}
+  ]
+];
+const DEF_HAB = [
+  'Sueño ≥7 h, levanto antes de 6 AM',
+  'Movimiento / entrenamiento',
+  'Orden diario (cuarto + cocina)',
+  'Tarea crítica ejecutada',
+  'Revisión nocturna 10:15 PM',
+  'Meditación / visualización'
+];
+
+// ── MUTABLE DATA ──────────────────────────────────────────────────────────────
+let WT, ND, HAB;
+// st: runtime state (checks, nodo status, habit grid, etc.)
+let st;
+
+const INPUT_IDS = ['m-dias','m-ing','m-peso','m-gas','r1','r2','r3','mision','dp','di','ds','de','dc','fecha','d-notas','sem-titulo','sem-fechas'];
+const KEY = 'splan_abr26';
+
+// ── PERSIST ───────────────────────────────────────────────────────────────────
+let _unsaved = false;
+let _saveTimer = null;
+
+function markUnsaved() {
+  _unsaved = true;
+  const dot=document.getElementById('save-dot'), lbl=document.getElementById('save-label'), btn=document.getElementById('save-btn');
+  if(dot) dot.className='unsaved-dot'; if(lbl) lbl.textContent='Guardar'; if(btn) btn.classList.remove('saved');
+  const md=document.getElementById('ms-dot'), ml=document.getElementById('ms-lbl'), mb=document.getElementById('mobile-save');
+  if(md){md.style.background='#f0a040';md.style.animation='pulse 1.5s infinite';} if(ml) ml.textContent='Guardar'; if(mb) mb.style.borderColor='rgba(240,160,64,.4)';
+}
+
+function markSaved() {
+  _unsaved=false; clearTimeout(_saveTimer);
+  const dot=document.getElementById('save-dot'), lbl=document.getElementById('save-label'), btn=document.getElementById('save-btn');
+  if(dot) dot.className='save-dot'; if(lbl) lbl.textContent='Guardado ✓'; if(btn) btn.classList.add('saved');
+  const md=document.getElementById('ms-dot'), ml=document.getElementById('ms-lbl'), mb=document.getElementById('mobile-save');
+  if(md){md.style.background='#7ff0c0';md.style.animation='';} if(ml) ml.textContent='Guardado ✓'; if(mb) mb.style.borderColor='rgba(127,240,192,.4)';
+  _saveTimer=setTimeout(()=>{
+    if(lbl) lbl.textContent='Guardar'; if(btn) btn.classList.remove('saved');
+    if(ml) ml.textContent='Guardar'; if(md) md.style.background=''; if(mb) mb.style.borderColor='rgba(201,240,96,.35)';
+  },2500);
+}
+
+function sv() {
+  markUnsaved();
+  upProg();
+}
+
+function manualSave() {
+  try {
+    const wobjEl=document.getElementById('wobj-view'), pciegoEl=document.getElementById('pciego-view');
+    const snap = { WT, ND, HAB, wc: st.wc, na: st.na, hg: st.hg, trn: st.trn, ev: st.ev,
+      wobj: wobjEl?wobjEl.textContent:'', pciego: pciegoEl?pciegoEl.textContent:'' };
+    INPUT_IDS.forEach(id => { const e = document.getElementById(id); if(e) snap[id] = e.value; });
+    localStorage.setItem(KEY, JSON.stringify(snap));
+    markSaved();
+  } catch(err) {
+    console.error('Save error:', err);
+    const lbl=document.getElementById('save-label'), ml=document.getElementById('ms-lbl');
+    if(lbl) lbl.textContent = 'Sin espacio';
+    if(ml)  ml.textContent  = 'Sin espacio';
+    setTimeout(()=>{ if(lbl) lbl.textContent='Guardar'; if(ml) ml.textContent='Guardar'; }, 2500);
+  }
+}
+
+function ld() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (!d) return;
+    if (d.WT)  WT  = d.WT;
+    if (d.ND)  ND  = d.ND;
+    if (d.HAB) HAB = d.HAB;
+    if (d.wc)  st.wc = d.wc;
+    if (d.na)  st.na = d.na;
+    if (d.hg)  st.hg = d.hg;
+    if (d.trn !== undefined) st.trn = d.trn;
+    if (d.ev  !== undefined) st.ev  = d.ev;
+    INPUT_IDS.forEach(id => { if(d[id]!==undefined){const e=document.getElementById(id);if(e)e.value=d[id];}});
+  if(d.wobj){const e=document.getElementById('wobj-view');if(e)e.textContent=d.wobj;}
+  if(d.pciego){const e=document.getElementById('pciego-view');if(e)e.textContent=d.pciego;}
+  } catch(e) {}
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function go(t, el) {
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('act'));
+  el.classList.add('on');
+  document.getElementById('panel-' + t).classList.add('act');
+}
+
+// ── PROGRESS ──────────────────────────────────────────────────────────────────
+function upProg() {
+  const d = parseFloat(document.getElementById('m-dias').value)||0;
+  const i = parseFloat(document.getElementById('m-ing').value)||0;
+  document.getElementById('pd').style.width = Math.min(100, d/30*100) + '%';
+  document.getElementById('pi').style.width = Math.min(100, i/6000*100) + '%';
+}
+
+function upDay() {
+  const v = document.getElementById('fecha').value;
+  if(!v) return;
+  document.getElementById('dayn').textContent = new Date(v+'T00:00:00').getDate();
+}
+
+// ── WEEKLY TASKS ──────────────────────────────────────────────────────────────
+let wteOn = false;
+
+function toggleWTE() {
+  wteOn = !wteOn;
+  const btn = document.getElementById('wte-btn');
+  btn.classList.toggle('on', wteOn);
+  btn.textContent = wteOn ? 'Listo' : 'Editar';
+  document.getElementById('wte-add').style.display = wteOn ? 'flex' : 'none';
+  rWT();
+  if(wteOn) document.getElementById('wte-inp').focus();
+}
+
+function rWT() {
+  document.getElementById('wte-list').innerHTML = WT.map((t, i) => {
+    if (wteOn) return `<div class="trow" style="cursor:default">
+        <input class="einp" value="${x(t)}" oninput="WT[${i}]=this.value;sv()">
+        <div class="iactions">
+          <button class="ibtn mv" onclick="mvWT(${i},-1)">↑</button>
+          <button class="ibtn mv" onclick="mvWT(${i},1)">↓</button>
+          <button class="ibtn del" onclick="delWT(${i})">✕</button>
+        </div></div>`;
+    const c = st.wc[i]||false;
+    return `<div class="trow" onclick="tgWT(${i})">
+      <div class="cb ${c?'on':''}">${c?'✓':''}</div>
+      <div class="ttxt ${c?'done':''}">${x(t)}</div></div>`;
+  }).join('');
+}
+
+// ── SEMANAL: OBJETIVO & PUNTO CIEGO ──────────────────────────────────────────
+let wobjOn = false, pciegoOn = false;
+
+function toggleWOBJ() {
+  wobjOn = !wobjOn;
+  const btn=document.getElementById('wobj-btn');
+  const view=document.getElementById('wobj-view');
+  const edit=document.getElementById('wobj-edit');
+  btn.classList.toggle('on', wobjOn);
+  btn.textContent = wobjOn ? 'Listo' : 'Editar';
+  if(wobjOn){
+    edit.value = view.textContent.replace(/^"|"$/g,'').trim();
+    view.style.display='none'; edit.style.display='block'; edit.focus();
+  } else {
+    const val = edit.value.trim();
+    view.textContent = val ? '"'+val+'"' : view.textContent;
+    view.style.display='block'; edit.style.display='none';
+    sv();
+  }
+}
+
+function togglePCiego() {
+  pciegoOn = !pciegoOn;
+  const btn=document.getElementById('pciego-btn');
+  const view=document.getElementById('pciego-view');
+  const edit=document.getElementById('pciego-edit');
+  btn.classList.toggle('on', pciegoOn);
+  btn.textContent = pciegoOn ? 'Listo' : 'Editar';
+  if(pciegoOn){
+    edit.value = view.textContent.trim();
+    view.style.display='none'; edit.style.display='block'; edit.focus();
+  } else {
+    const val = edit.value.trim();
+    if(val) view.textContent = val;
+    view.style.display='block'; edit.style.display='none';
+    sv();
+  }
+}
+
+function tgWT(i) { st.wc[i]=!st.wc[i]; rWT(); sv(); }
+function delWT(i) { WT.splice(i,1); st.wc.splice(i,1); rWT(); sv(); }
+function mvWT(i,d) {
+  const j=i+d; if(j<0||j>=WT.length) return;
+  [WT[i],WT[j]]=[WT[j],WT[i]]; [st.wc[i],st.wc[j]]=[st.wc[j],st.wc[i]];
+  rWT(); sv();
+}
+function addWT() {
+  const inp=document.getElementById('wte-inp'), v=inp.value.trim(); if(!v) return;
+  WT.push(v); st.wc.push(false); inp.value=''; rWT(); sv(); inp.focus();
+}
+
+// ── NODOS ─────────────────────────────────────────────────────────────────────
+let neOn = false;
+
+function toggleNE() {
+  neOn = !neOn;
+  const btn = document.getElementById('ne-btn');
+  btn.classList.toggle('on', neOn);
+  btn.textContent = neOn ? 'Listo' : 'Editar nodos';
+  rAllN();
+}
+
+function rAllN() {
+  [0,1,2].forEach(ni => rN(ni));
+}
+
+function rN(ni) {
+  const cid = 'n'+(ni+1);
+  const arr  = ND[ni];
+  const sarr = st.na[ni] || {};
+  let html = arr.map((a,i) => {
+    if (neOn) {
+      return `<div class="arow-e">
+        <div class="an">${i+1}</div>
+        <input class="einp-sm" value="${x(a.h)}" placeholder="HH:MM"
+          oninput="ND[${ni}][${i}].h=this.value;sv()">
+        <input class="einp" value="${x(a.n)}" placeholder="Actividad"
+          oninput="ND[${ni}][${i}].n=this.value;sv()">
+        <div class="iactions">
+          <button class="ibtn mv" onclick="mvN(${ni},${i},-1)">↑</button>
+          <button class="ibtn mv" onclick="mvN(${ni},${i},1)">↓</button>
+          <button class="ibtn del" onclick="delN(${ni},${i})">✕</button>
+        </div></div>`;
+    }
+    const s = sarr[i];
+    return `<div class="arow">
+      <div class="an">${i+1}</div>
+      <div class="ahr">${x(a.h)}</div>
+      <div class="aname">${x(a.n)}</div>
+      <div class="abtn ${s==='si'?'si':''}" onclick="tgA(${ni},${i},'si')">S</div>
+      <div class="abtn ${s==='no'?'no':''}" onclick="tgA(${ni},${i},'no')">N</div>
+    </div>`;
+  }).join('');
+
+  if (neOn) {
+    html += `<div class="addrow">
+      <input class="addinp" id="na-n${ni}" placeholder="Nueva actividad..." onkeydown="if(event.key==='Enter')addN(${ni})">
+      <input class="einp-sm" id="na-h${ni}" placeholder="HH:MM" onkeydown="if(event.key==='Enter')addN(${ni})" style="flex-shrink:0">
+      <button class="addbtn" onclick="addN(${ni})">+ Agregar</button>
+    </div>`;
+  }
+  document.getElementById(cid).innerHTML = html;
+}
+
+function tgA(ni, i, v) {
+  if(!st.na[ni]) st.na[ni]={};
+  st.na[ni][i] = st.na[ni][i]===v ? null : v;
+  rN(ni); sv();
+}
+
+function delN(ni, i) {
+  ND[ni].splice(i,1);
+  // rebuild sarr with shifted keys
+  const old = st.na[ni]||{}, nw={};
+  Object.keys(old).forEach(k=>{
+    const n=parseInt(k);
+    if(n<i) nw[n]=old[k];
+    else if(n>i) nw[n-1]=old[k];
+  });
+  st.na[ni]=nw;
+  rN(ni); sv();
+}
+
+function mvN(ni, i, d) {
+  const j=i+d; if(j<0||j>=ND[ni].length) return;
+  [ND[ni][i],ND[ni][j]]=[ND[ni][j],ND[ni][i]];
+  const s=st.na[ni]||{};
+  [s[i],s[j]]=[s[j],s[i]];
+  st.na[ni]=s;
+  rN(ni); sv();
+}
+
+function addN(ni) {
+  const nEl=document.getElementById('na-n'+ni), hEl=document.getElementById('na-h'+ni);
+  const n=nEl.value.trim(); if(!n) return;
+  ND[ni].push({h:hEl.value.trim()||'—', n});
+  nEl.value=''; hEl.value='';
+  rN(ni); sv();
+  document.getElementById('na-n'+ni).focus();
+}
+
+// ── TRAIN / EVAL ──────────────────────────────────────────────────────────────
+function setTrn(v) {
+  st.trn=v;
+  document.getElementById('tsi').className='trnbtn'+(v?' si':'');
+  document.getElementById('tno').className='trnbtn'+(!v?' no':'');
+  sv();
+}
+function setEv(v) {
+  st.ev=v;
+  document.getElementById('esi').className='evbtn'+(v?' si':'');
+  document.getElementById('eno').className='evbtn'+(!v?' no':'');
+  sv();
+}
+
+// ── HABITS ────────────────────────────────────────────────────────────────────
+let heOn = false;
+
+function toggleHE() {
+  heOn = !heOn;
+  const btn=document.getElementById('he-btn');
+  btn.classList.toggle('on',heOn);
+  btn.textContent = heOn?'Listo':'Editar';
+  document.getElementById('he-add').style.display = heOn?'flex':'none';
+  rH(); if(heOn) document.getElementById('he-inp').focus();
+}
+
+function rH() {
+  let h='<thead><tr><th class="hn">Hábito</th>';
+  for(let d=1;d<=30;d++) h+=`<th>${d}</th>`;
+  h+='</tr></thead><tbody>';
+  HAB.forEach((hab,hi)=>{
+    h+='<tr>';
+    if(heOn) {
+      h+=`<td class="hnc"><div style="display:flex;align-items:center;gap:6px">
+        <input class="hnc-inp" value="${x(hab)}" oninput="HAB[${hi}]=this.value;sv()">
+        <button class="ibtn del" onclick="delHabit(${hi})" style="flex-shrink:0">✕</button>
+      </div></td>`;
+    } else {
+      h+=`<td class="hnc">${x(hab)}</td>`;
+    }
+    for(let d=0;d<30;d++){
+      const v=(st.hg[hi]&&st.hg[hi][d])||0;
+      const c=v===1?'ok':v===2?'fail':'', s=v===1?'✓':v===2?'✗':'';
+      h+=`<td><div class="hcell ${c}" onclick="cyH(${hi},${d})">${s}</div></td>`;
+    }
+    h+='</tr>';
+  });
+  document.getElementById('htbl').innerHTML=h+'</tbody>';
+  rHS();
+}
+
+function cyH(hi,d){
+  if(!st.hg[hi]) st.hg[hi]=Array(30).fill(0);
+  st.hg[hi][d]=(st.hg[hi][d]+1)%3;
+  rH(); sv();
+}
+function delHabit(hi){ HAB.splice(hi,1); st.hg.splice(hi,1); rH(); sv(); }
+function addHabit(){
+  const inp=document.getElementById('he-inp'), v=inp.value.trim(); if(!v) return;
+  HAB.push(v); st.hg.push(Array(30).fill(0));
+  inp.value=''; rH(); sv(); inp.focus();
+}
+
+function rHS(){
+  const flat=st.hg.flat();
+  const done=flat.filter(v=>v===1).length, fail=flat.filter(v=>v===2).length;
+  const tot=flat.filter(v=>v>0).length, pct=tot>0?Math.round(done/tot*100):0;
+  let streak=0;
+  for(let d=29;d>=0;d--){
+    if(st.hg.length>0&&st.hg.every(h=>h&&h[d]===1)) streak++; else break;
+  }
+  document.getElementById('hsum').innerHTML=
+    `<div class="sbox"><div class="sn">${done}</div><div class="sl">Cumplidos</div></div>
+     <div class="sbox"><div class="sn" style="color:var(--err)">${fail}</div><div class="sl">Fallidos</div></div>
+     <div class="sbox"><div class="sn">${pct}%</div><div class="sl">Éxito</div></div>
+     <div class="sbox"><div class="sn" style="color:var(--acc2)">${streak}</div><div class="sl">Racha</div></div>`;
+}
+
+// ── UTIL ──────────────────────────────────────────────────────────────────────
+function x(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(function init(){
+  // deep copy defaults
+  WT  = DEF_WT.map(s=>s);
+  ND  = DEF_N.map(arr=>arr.map(o=>({...o})));
+  HAB = DEF_HAB.map(s=>s);
+  st  = {
+    wc: WT.map(()=>false),
+    na: [{},{},{}],
+    hg: DEF_HAB.map(()=>Array(30).fill(0)),
+    trn: null, ev: null
+  };
+
+  ld(); // overwrite with saved
+
+  // sync wc length
+  while(st.wc.length < WT.length) st.wc.push(false);
+  // sync na length
+  while(st.na.length < 3) st.na.push({});
+  // sync hg length
+  while(st.hg.length < HAB.length) st.hg.push(Array(30).fill(0));
+
+  // set today
+  const fd=document.getElementById('fecha');
+  if(!fd.value){
+    const t=new Date();
+    fd.value=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  }
+  upDay(); upProg();
+  rWT(); rAllN(); rH();
+  if(st.trn!==null) setTrn(st.trn);
+  if(st.ev!==null)  setEv(st.ev);
+
+  // Ctrl+S / Cmd+S keyboard shortcut
+  document.addEventListener('keydown', e => {
+    if((e.ctrlKey||e.metaKey) && e.key==='s'){
+      e.preventDefault();
+      manualSave();
+    }
+  });
+})();
+</script>
+
+<!-- Mobile floating save button -->
+<button id="mobile-save" onclick="manualSave()" style="display:none;position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;padding:10px 18px;border-radius:20px;border:1px solid rgba(201,240,96,.35);background:#1c1c1c;color:#c9f060;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);gap:7px;align-items:center">
+  <span id="ms-dot" style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;vertical-align:middle;margin-right:4px;opacity:.7"></span>
+  <span id="ms-lbl">Guardar</span>
+</button>
+<style>
+@media(max-width:640px){
+  #mobile-save{display:flex!important}
+  /* sync mobile dot state */
+}
+</style>
+
+</body>
+</html>

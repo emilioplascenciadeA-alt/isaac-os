@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Financiero Maestro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: #232330;
+    --accent: #c8f04a;
+    --accent2: #4af0c8;
+    --danger: #f04a6e;
+    --warn: #f0a84a;
+    --purple: #a78bfa;
+    --text: #e8e8f0;
+    --muted: #5a5a72;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-mono); min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.4;
+  }
+
+  /* ── NAV TABS ── */
+  .nav-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px; gap: 2px;
+    overflow-x: auto;
+  }
+  .nav-bar::-webkit-scrollbar { height: 0; }
+  .nav-tab {
+    padding: 14px 16px;
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); cursor: pointer;
+    border: none; background: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s; white-space: nowrap;
+    margin-bottom: -1px;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-logo {
+    font-family: var(--font-head); font-size: 14px; font-weight: 800;
+    color: var(--text); margin-right: 20px; white-space: nowrap;
+  }
+  .nav-logo span { color: var(--accent); }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 20px 100px; }
+
+  /* ── HEADER SECTION ── */
+  .page-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 32px;
+  }
+  .page-eyebrow {
+    font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .page-title {
+    font-family: var(--font-head); font-size: 30px; font-weight: 800;
+    line-height: 1; color: var(--text);
+  }
+  .page-title span { color: var(--accent); }
+  .month-badge {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 16px;
+    font-size: 12px; color: var(--muted);
+    cursor: pointer; transition: all 0.2s; font-family: var(--font-mono);
+  }
+  .month-badge:hover { border-color: var(--accent); color: var(--accent); }
+  .month-badge span { color: var(--text); }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    transition: border-color 0.2s; position: relative; overflow: hidden;
+  }
+  .card:hover { border-color: var(--muted); }
+  .card::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .card.c-green::after { background: var(--accent); }
+  .card.c-red::after   { background: var(--danger); }
+  .card.c-teal::after  { background: var(--accent2); }
+  .card.c-warn::after  { background: var(--warn); }
+  .card.c-purple::after { background: var(--purple); }
+  .card-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .card-value { font-family: var(--font-head); font-size: 26px; font-weight: 700; background: transparent; border: none; color: var(--text); width: 100%; padding: 0; outline: none; }
+  .card-value.teal { color: var(--accent2); }
+  .card-value.green { color: var(--accent); }
+  .card-value.red   { color: var(--danger); }
+  .card-value.warn  { color: var(--warn); }
+  .card-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* ── GRIDS ── */
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+
+  /* ── SECTION HEADERS ── */
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; margin-top: 36px; }
+  .section-title {
+    font-family: var(--font-head); font-size: 13px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+  .dot-green  { background: var(--accent); }
+  .dot-red    { background: var(--danger); }
+  .dot-teal   { background: var(--accent2); }
+  .dot-warn   { background: var(--warn); }
+  .dot-purple { background: var(--purple); }
+  .dot-muted  { background: var(--muted); }
+
+  .divider { height: 1px; background: var(--border); margin: 40px 0; }
+
+  .btn-add {
+    background: transparent; border: 1px dashed var(--border); color: var(--muted);
+    padding: 6px 14px; border-radius: 8px; font-family: var(--font-mono); font-size: 12px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── TABLES ── */
+  .entry-table { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .entry-row { display: grid; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .entry-row:last-child { border-bottom: none; }
+  .entry-row:hover { background: var(--surface2); }
+  .entry-row.header-row { background: var(--surface2); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+  .entry-cell {
+    padding: 11px 14px; border-right: 1px solid var(--border);
+    display: flex; align-items: center;
+  }
+  .entry-cell:last-child { border-right: none; justify-content: center; }
+  .entry-cell input, .entry-cell select {
+    background: transparent; border: none; color: var(--text);
+    font-family: var(--font-mono); font-size: 13px; width: 100%; outline: none;
+  }
+  .entry-cell input:focus { color: var(--accent); }
+  .cell-delete { cursor: pointer; color: var(--muted); font-size: 16px; transition: color 0.2s; background: none; border: none; padding: 0 4px; }
+  .cell-delete:hover { color: var(--danger); }
+  .monto-green input { color: var(--accent) !important; }
+  .monto-red   input { color: var(--danger) !important; }
+  .monto-warn  input { color: var(--warn) !important; }
+  .empty-state { padding: 28px; text-align: center; color: var(--muted); font-size: 12px; }
+
+  /* ── PROGRESS ── */
+  .progress-track { height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .progress-fill  { height: 100%; border-radius: 99px; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); }
+  .fill-green  { background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+  .fill-warn   { background: linear-gradient(90deg, var(--warn), var(--danger)); }
+  .fill-purple { background: linear-gradient(90deg, var(--purple), var(--accent2)); }
+
+  /* ── ACCOUNTS ── */
+  .account-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; display: flex; align-items: center; gap: 14px;
+    transition: border-color 0.2s; margin-bottom: 10px;
+  }
+  .account-card:hover { border-color: var(--muted); }
+  .account-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+    background: var(--surface2); border: 1px solid var(--border);
+  }
+  .account-info { flex: 1; }
+  .account-name input {
+    background: transparent; border: none; color: var(--text);
+    font-family: var(--font-head); font-size: 15px; font-weight: 700;
+    width: 100%; outline: none;
+  }
+  .account-name input:focus { color: var(--accent); }
+  .account-type { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; margin-top: 3px; }
+  .account-type select {
+    background: transparent; border: none; color: var(--muted);
+    font-family: var(--font-mono); font-size: 10px; outline: none;
+  }
+  .account-balance { text-align: right; }
+  .account-balance input {
+    background: transparent; border: none; text-align: right;
+    font-family: var(--font-head); font-size: 20px; font-weight: 700;
+    color: var(--accent2); outline: none; width: 140px;
+  }
+  .account-balance input:focus { color: var(--accent); }
+  .account-delete { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; transition: color 0.2s; }
+  .account-delete:hover { color: var(--danger); }
+
+  /* ── HEATMAP CALENDAR ── */
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+    margin-top: 12px;
+  }
+  .cal-day-label { font-size: 9px; color: var(--muted); text-align: center; letter-spacing: 0.1em; padding-bottom: 6px; }
+  .cal-day {
+    aspect-ratio: 1; border-radius: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; font-size: 10px; cursor: pointer;
+    transition: all 0.15s; position: relative; overflow: hidden;
+  }
+  .cal-day:hover { border-color: var(--accent); }
+  .cal-day .cal-num { font-size: 11px; font-weight: 500; z-index: 1; }
+  .cal-day .cal-amt { font-size: 8px; color: var(--muted); z-index: 1; }
+  .cal-day.has-payment { border-color: var(--warn); }
+  .cal-day.has-payment .cal-num { color: var(--warn); }
+  .cal-day.today-mark { border-color: var(--accent2) !important; }
+  .cal-day.today-mark .cal-num { color: var(--accent2); }
+  .cal-day.other-month { opacity: 0.3; }
+  .cal-day.urgente { background: rgba(240,74,110,0.1); border-color: var(--danger); }
+  .cal-day.urgente .cal-num { color: var(--danger); }
+
+  /* ── FLUJO ── */
+  .flujo-week {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 20px; margin-bottom: 10px; transition: border-color 0.2s;
+  }
+  .flujo-week:hover { border-color: var(--muted); }
+  .flujo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .flujo-label { font-family: var(--font-head); font-size: 13px; font-weight: 700; }
+  .flujo-net { font-family: var(--font-head); font-size: 18px; font-weight: 700; }
+  .flujo-net.pos { color: var(--accent); }
+  .flujo-net.neg { color: var(--danger); }
+  .flujo-bars { display: flex; gap: 8px; align-items: flex-end; height: 48px; }
+  .flujo-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .flujo-bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.5s ease; }
+  .flujo-bar.in  { background: var(--accent); opacity: 0.8; }
+  .flujo-bar.out { background: var(--danger); opacity: 0.8; }
+  .flujo-bar-label { font-size: 8px; color: var(--muted); text-align: center; }
+  .flujo-detail { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 10px; }
+  .flujo-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .flujo-field label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+  .flujo-field input {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 10px; color: var(--text); font-family: var(--font-mono);
+    font-size: 13px; width: 100%; outline: none; transition: border-color 0.2s;
+  }
+  .flujo-field input:focus { border-color: var(--accent); }
+
+  /* ── METAS ── */
+  .meta-goal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; margin-bottom: 10px; transition: border-color 0.2s;
+  }
+  .meta-goal:hover { border-color: var(--muted); }
+  .meta-goal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .meta-goal-name input {
+    background: transparent; border: none; color: var(--text);
+    font-family: var(--font-head); font-size: 16px; font-weight: 700;
+    width: 100%; outline: none;
+  }
+  .meta-goal-name input:focus { color: var(--accent); }
+  .meta-goal-pct { font-family: var(--font-head); font-size: 22px; font-weight: 800; }
+  .meta-goal-fields { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .meta-goal-field { display: flex; flex-direction: column; gap: 3px; }
+  .meta-goal-field label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+  .meta-goal-field input {
+    background: transparent; border: none; color: var(--text);
+    font-family: var(--font-mono); font-size: 13px; outline: none; width: 110px;
+  }
+  .meta-goal-field input:focus { border-bottom: 1px dashed var(--accent); color: var(--accent); }
+  .meta-goal-status { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+  /* ── DEUDAS ── */
+  .deuda-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 10px; display: flex; gap: 12px; transition: border-color 0.2s;
+  }
+  .deuda-card:hover { border-color: var(--warn); }
+  .deuda-nombre input {
+    background: transparent; border: none; font-family: var(--font-head);
+    font-size: 15px; font-weight: 700; color: var(--text); outline: none; width: 100%;
+  }
+  .deuda-nombre input:focus { color: var(--warn); }
+  .deuda-fields { display: flex; gap: 16px; flex-wrap: wrap; }
+  .deuda-field { display: flex; flex-direction: column; gap: 3px; }
+  .deuda-field label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+  .deuda-field input {
+    background: transparent; border: none; color: var(--text);
+    font-family: var(--font-mono); font-size: 13px; outline: none; width: 110px;
+  }
+  .deuda-field input:focus { border-bottom: 1px dashed var(--warn); color: var(--warn); }
+  .deuda-bar { height: 4px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+  .deuda-fill { height: 100%; background: linear-gradient(90deg, var(--warn), var(--danger)); border-radius: 99px; transition: width 0.6s ease; }
+  .deuda-pct { font-size: 10px; color: var(--muted); margin-top: 5px; }
+  .deuda-delete { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; transition: color 0.2s; align-self: flex-start; }
+  .deuda-delete:hover { color: var(--danger); }
+
+  /* ── HOY WIDGET (PORTADA) ── */
+  .hoy-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+  .hoy-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 22px; position: relative; overflow: hidden; transition: border-color 0.2s;
+  }
+  .hoy-card:hover { border-color: var(--muted); }
+  .hoy-q { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .hoy-answer { font-family: var(--font-head); font-size: 28px; font-weight: 800; line-height: 1; }
+  .hoy-answer.green  { color: var(--accent); }
+  .hoy-answer.teal   { color: var(--accent2); }
+  .hoy-answer.warn   { color: var(--warn); }
+  .hoy-sub { font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .hoy-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .hoy-card.q1::before { background: var(--accent); }
+  .hoy-card.q2::before { background: var(--warn); }
+  .hoy-card.q3::before { background: var(--accent2); }
+
+  /* ── PAGOS FUTUROS ── */
+  .pago-row {
+    display: grid; grid-template-columns: 100px 1fr 120px 110px 80px 32px;
+    border-bottom: 1px solid var(--border); transition: background 0.15s;
+  }
+  .pago-row:last-child { border-bottom: none; }
+  .pago-row:hover { background: var(--surface2); }
+  .pago-row.urgente-row { background: rgba(240,74,110,0.04); }
+  .urgente-badge {
+    display: inline-block; background: rgba(240,74,110,0.15); color: var(--danger);
+    border-radius: 4px; padding: 1px 6px; font-size: 9px; letter-spacing: 0.1em;
+    margin-left: 6px;
+  }
+  .proximo-badge {
+    display: inline-block; background: rgba(240,168,74,0.15); color: var(--warn);
+    border-radius: 4px; padding: 1px 6px; font-size: 9px; letter-spacing: 0.1em;
+    margin-left: 6px;
+  }
+
+  /* ── ANALISIS ── */
+  .analisis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .analisis-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .analisis-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .analisis-input { background: transparent; border: none; color: var(--text); font-family: var(--font-mono); font-size: 13px; width: 100%; outline: none; }
+  .analisis-input:focus { color: var(--accent2); }
+  .analisis-input::placeholder { color: var(--border); }
+
+  /* ── PLAN ── */
+  .plan-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; }
+  .plan-section { margin-bottom: 20px; }
+  .plan-section:last-child { margin-bottom: 0; }
+  .plan-section-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .plan-input {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; color: var(--text); font-family: var(--font-mono); font-size: 13px;
+    width: 100%; outline: none; transition: border-color 0.2s; margin-bottom: 8px;
+  }
+  .plan-input:focus { border-color: var(--accent2); }
+  .plan-input::placeholder { color: var(--muted); }
+  .dias-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dia-btn {
+    width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-size: 11px;
+    font-family: var(--font-mono); cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  }
+  .dia-btn span { font-size: 9px; }
+  .dia-btn.checked { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
+  .dia-btn.today { border-color: var(--accent2); color: var(--accent2); }
+
+  /* ── REGLAS ── */
+  .reglas-list { display: flex; flex-direction: column; gap: 8px; }
+  .regla-item { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; transition: border-color 0.2s; }
+  .regla-item:hover { border-color: var(--accent); }
+  .regla-num { font-family: var(--font-head); font-size: 18px; font-weight: 800; color: var(--border); min-width: 24px; }
+  .regla-input { background: transparent; border: none; color: var(--text); font-family: var(--font-mono); font-size: 13px; flex: 1; outline: none; }
+  .regla-input:focus { color: var(--accent); }
+  .regla-input::placeholder { color: var(--muted); }
+
+  /* ── META AHORRO CARD ── */
+  .meta-ahorro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
+  .meta-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .meta-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+  .meta-pct { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--accent); }
+  .meta-values { display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: var(--muted); }
+  .meta-input { background: transparent; border: none; color: var(--text); font-family: var(--font-mono); font-size: 11px; width: 80px; outline: none; border-bottom: 1px dashed var(--border); }
+
+  /* ── TOTAL DEUDA ── */
+  .total-deuda-summary { display: flex; justify-content: space-between; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; margin-bottom: 14px; font-size: 12px; color: var(--muted); }
+
+  /* ── SAVE BAR ── */
+  .save-bar { position: fixed; bottom: 24px; right: 24px; display: flex; gap: 10px; align-items: center; z-index: 200; }
+  .save-btn { background: var(--accent); color: var(--bg); border: none; font-family: var(--font-head); font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 10px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em; }
+  .save-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,240,74,0.3); }
+  .save-btn:active { transform: translateY(0); }
+  .save-hint { font-size: 11px; color: var(--muted); }
+  .toast { position: fixed; bottom: 80px; right: 24px; background: var(--surface2); border: 1px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 10px 18px; font-size: 12px; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; z-index: 300; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeUp 0.45s ease both; }
+
+  @media (max-width: 640px) {
+    .grid-3, .hoy-grid { grid-template-columns: 1fr 1fr; }
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .analisis-grid { grid-template-columns: 1fr; }
+    .pago-row { grid-template-columns: 90px 1fr 100px 32px; }
+    .pago-row .pc3, .pago-row .pc4 { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav-bar">
+  <div class="nav-logo">F<span>M</span></div>
+  <button class="nav-tab active" onclick="goPage('portada')">Hoy</button>
+  <button class="nav-tab" onclick="goPage('cuentas')">Cuentas</button>
+  <button class="nav-tab" onclick="goPage('ingresos')">Ingresos</button>
+  <button class="nav-tab" onclick="goPage('egresos')">Egresos</button>
+  <button class="nav-tab" onclick="goPage('deudas')">Deudas</button>
+  <button class="nav-tab" onclick="goPage('pagos')">Pagos Futuros</button>
+  <button class="nav-tab" onclick="goPage('calendario')">Calendario</button>
+  <button class="nav-tab" onclick="goPage('flujo')">Flujo</button>
+  <button class="nav-tab" onclick="goPage('metas')">Metas</button>
+  <button class="nav-tab" onclick="goPage('plan')">Plan</button>
+</nav>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 0 · HOY (PORTADA)
+     ════════════════════════════════════════════ -->
+<div id="page-portada" class="page active">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Dashboard Financiero Maestro</div>
+      <div class="page-title">¿Cómo estoy <span>hoy?</span></div>
+    </div>
+    <button class="month-badge" onclick="editMes()"><span id="mesDisplay">Julio 2025</span> ↗</button>
+  </div>
+
+  <!-- 3 PREGUNTAS CLAVE -->
+  <div class="hoy-grid">
+    <div class="hoy-card q1">
+      <div class="hoy-q">¿Cuánto puedo<br>gastar hoy?</div>
+      <div class="hoy-answer green" id="hoy-gastar">$0</div>
+      <div class="hoy-sub" id="hoy-gastar-sub">Balance neto disponible</div>
+    </div>
+    <div class="hoy-card q2">
+      <div class="hoy-q">¿Qué pago<br>sigue?</div>
+      <div class="hoy-answer warn" id="hoy-prox-pago">—</div>
+      <div class="hoy-sub" id="hoy-prox-fecha">Sin pagos registrados</div>
+    </div>
+    <div class="hoy-card q3">
+      <div class="hoy-q">¿Voy adelantado<br>o atrasado?</div>
+      <div class="hoy-answer teal" id="hoy-meta-status">—</div>
+      <div class="hoy-sub" id="hoy-meta-sub">Configura tu meta de ahorro</div>
+    </div>
+  </div>
+
+  <!-- RESUMEN RÁPIDO -->
+  <div class="section-header" style="margin-top:8px;">
+    <div class="section-title"><span class="dot dot-muted"></span>Resumen del Mes</div>
+  </div>
+  <div class="grid-4">
+    <div class="card c-green">
+      <div class="card-label">Ingresos</div>
+      <div class="card-value green" id="sum-ing">$0</div>
+    </div>
+    <div class="card c-red">
+      <div class="card-label">Egresos</div>
+      <div class="card-value red" id="sum-eg">$0</div>
+    </div>
+    <div class="card c-warn">
+      <div class="card-label">Total Deudas</div>
+      <div class="card-value warn" id="sum-deuda">$0</div>
+    </div>
+    <div class="card c-teal">
+      <div class="card-label">Saldo Cuentas</div>
+      <div class="card-value teal" id="sum-cuentas">$0</div>
+    </div>
+  </div>
+
+  <!-- META AHORRO -->
+  <div class="meta-ahorro-card">
+    <div class="meta-header">
+      <div class="meta-label">Meta de Ahorro Mensual</div>
+      <div class="meta-pct" id="metaPctPortada">0%</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill fill-green" id="progressFillPortada" style="width:0%"></div></div>
+    <div class="meta-values">
+      <span>Ahorrado: <span id="metaAhorradoPortada" style="color:var(--text)">$0</span></span>
+      <span>Meta: $<input class="meta-input" id="metaValor" placeholder="00000" oninput="calcTotals()" /></span>
+    </div>
+  </div>
+
+  <!-- PRÓXIMOS VENCIMIENTOS (preview) -->
+  <div class="section-header">
+    <div class="section-title"><span class="dot dot-warn"></span>Próximos Vencimientos</div>
+    <button class="btn-add" onclick="goPage('pagos')">Ver todos →</button>
+  </div>
+  <div class="entry-table">
+    <div id="venc-preview-body">
+      <div class="empty-state">Sin pagos registrados. Ve a "Pagos Futuros" para agregar.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 1 · CUENTAS
+     ════════════════════════════════════════════ -->
+<div id="page-cuentas" class="page">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Saldo de Cuentas</div>
+      <div class="page-title">Mis <span>Cuentas</span></div>
+    </div>
+  </div>
+
+  <div class="grid-3" id="cuentas-resumen-grid">
+    <div class="card c-teal">
+      <div class="card-label">Saldo Total</div>
+      <div class="card-value teal" id="cuentas-total">$0</div>
+      <div class="card-sub">Todas las cuentas</div>
+    </div>
+    <div class="card c-green">
+      <div class="card-label">Efectivo / Débito</div>
+      <div class="card-value green" id="cuentas-debito">$0</div>
+    </div>
+    <div class="card c-red">
+      <div class="card-label">Crédito Disponible</div>
+      <div class="card-value red" id="cuentas-credito">$0</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title"><span class="dot dot-teal"></span>Cuentas Registradas</div>
+    <button class="btn-add" onclick="addCuenta()">+ Agregar cuenta</button>
+  </div>
+  <div id="cuentasContainer">
+    <div class="empty-state" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;">
+      Agrega tus cuentas — efectivo, débito, crédito, ahorro.
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 2 · INGRESOS
+     ════════════════════════════════════════════ -->
+<div id="page-ingresos" class="page">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Registro</div>
+      <div class="page-title"><span>Ingresos</span></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card c-green">
+      <div class="card-label">Total del Mes</div>
+      <div class="card-value green" id="ing-total">$0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Último Ingreso</div>
+      <div class="card-value" id="ing-ultimo">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Entradas Registradas</div>
+      <div class="card-value" id="ing-count">0</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title"><span class="dot dot-green"></span>Registro de Ingresos</div>
+    <button class="btn-add" onclick="addIngreso()">+ Agregar</button>
+  </div>
+  <div class="entry-table">
+    <div class="entry-row header-row" style="grid-template-columns:100px 130px 1fr 1fr 32px;">
+      <div class="entry-cell">Fecha</div>
+      <div class="entry-cell">Monto</div>
+      <div class="entry-cell">Fuente</div>
+      <div class="entry-cell">Notas</div>
+      <div class="entry-cell"></div>
+    </div>
+    <div id="ingresosBody"><div class="empty-state">Sin ingresos. Agrega el primero ↑</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 3 · EGRESOS
+     ════════════════════════════════════════════ -->
+<div id="page-egresos" class="page">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Registro</div>
+      <div class="page-title"><span style="color:var(--danger)">Egresos</span></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card c-red">
+      <div class="card-label">Total del Mes</div>
+      <div class="card-value red" id="eg-total">$0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Mayor Categoría</div>
+      <div class="card-value" id="eg-cat">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Egresos Registrados</div>
+      <div class="card-value" id="eg-count">0</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title"><span class="dot dot-red"></span>Registro de Egresos</div>
+    <button class="btn-add" onclick="addEgreso()">+ Agregar</button>
+  </div>
+  <div class="entry-table">
+    <div class="entry-row header-row" style="grid-template-columns:100px 130px 140px 1fr 32px;">
+      <div class="entry-cell">Fecha</div>
+      <div class="entry-cell">Monto</div>
+      <div class="entry-cell">Categoría</div>
+      <div class="entry-cell">Notas</div>
+      <div class="entry-cell"></div>
+    </div>
+    <div id="egresosBody"><div class="empty-state">Sin egresos. Agrega el primero ↑</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 4 · DEUDAS
+     ════════════════════════════════════════════ -->
+<div id="page-deudas" class="page">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Seguimiento</div>
+      <div class="page-title"><span style="color:var(--warn)">Deudas</span></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card c-warn">
+      <div class="card-label">Total Adeudado</div>
+      <div class="card-value warn" id="deuda-total-header">$0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Ya Pagado</div>
+      <div class="card-value green" id="deuda-pagado-header">$0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Número de Deudas</div>
+      <div class="card-value" id="deuda-count">0</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title"><span class="dot dot-warn"></span>Mis Deudas</div>
+    <button class="btn-add" onclick="addDeuda()">+ Agregar</button>
+  </div>
+  <div id="deudasContainer">
+    <div class="empty-state" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;">Sin deudas registradas.</div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 5 · PAGOS FUTUROS
+     ════════════════════════════════════════════ -->
+<div id="page-pagos" class="page">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Compromisos</div>
+      <div class="page-title">Pagos <span>Futuros</span></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card c-warn">
+      <div class="card-label">Próximos 7 días</div>
+      <div class="card-value warn" id="pf-semana">$0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Este Mes</div>
+      <div class="card-value" id="pf-mes">$0</div>
+    </div>
+    <div class="card c-red">
+      <div class="card-label">Vencidos</div>
+      <div class="card-value red" id="pf-vencidos">0</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title"><span class="dot dot-warn"></span>Pagos Programados</div>
+    <button class="btn-add" onclick="addPago()">+ Agregar</button>
+  </div>
+  <div class="entry-table">
+    <div class="pago-row header-row entry-row" style="background:var(--surface2);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);">
+      <div class="entry-cell">Fecha</div>
+      <div class="entry-cell">Concepto</div>
+      <div class="entry-cell pc3">Monto</div>
+      <div class="entry-cell pc4">Categoría</div>
+      <div class="entry-cell">Estado</div>
+      <div class="entry-cell"></div>
+    </div>
+    <div id="pagosBody"><div class="empty-state">Sin pagos registrados.</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 6 · CALENDARIO
+     ════════════════════════════════════════════ -->
+<div id="page-calendario" class="page">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Vencimientos</div>
+      <div class="page-title">Calendario <span>Financiero</span></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn-add" onclick="calPrev()">‹</button>
+      <span id="calMonthLabel" style="font-size:13px;color:var(--text);min-width:110px;text-align:center;"></span>
+      <button class="btn-add" onclick="calNext()">›</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:14px;margin-bottom:16px;flex-wrap:wrap;">
+    <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--accent2);display:inline-block"></span>Hoy</span>
+    <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--warn);display:inline-block"></span>Pago próximo</span>
+    <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--danger);display:inline-block"></span>Urgente / Vencido</span>
+  </div>
+
+  <div class="card" style="padding:20px;">
+    <div class="cal-grid" id="calDayLabels"></div>
+    <div class="cal-grid" id="calGrid" style="margin-top:0;"></div>
+  </div>
+
+  <div class="section-header" style="margin-top:28px;">
+    <div class="section-title"><span class="dot dot-warn"></span>Eventos de este mes</div>
+  </div>
+  <div class="entry-table">
+    <div id="calEventsList"><div class="empty-state">No hay pagos en este mes.</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 7 · FLUJO DE EFECTIVO
+     ════════════════════════════════════════════ -->
+<div id="page-flujo" class="page">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Proyección</div>
+      <div class="page-title">Flujo de <span>Efectivo</span></div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:28px;">
+    <div class="card c-green">
+      <div class="card-label">Proyección Total Ingresos</div>
+      <div class="card-value green" id="flujo-ing-total">$0</div>
+    </div>
+    <div class="card c-red">
+      <div class="card-label">Proyección Total Egresos</div>
+      <div class="card-value red" id="flujo-eg-total">$0</div>
+    </div>
+    <div class="card c-teal">
+      <div class="card-label">Flujo Neto Proyectado</div>
+      <div class="card-value teal" id="flujo-neto">$0</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title"><span class="dot dot-teal"></span>Semanas del Mes</div>
+  </div>
+  <div id="flujoContainer"></div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 8 · METAS
+     ════════════════════════════════════════════ -->
+<div id="page-metas" class="page">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Objetivos Financieros</div>
+      <div class="page-title">Mis <span>Metas</span></div>
+    </div>
+    <button class="btn-add" onclick="addMeta()">+ Nueva Meta</button>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:28px;">
+    <div class="card c-teal">
+      <div class="card-label">Metas Activas</div>
+      <div class="card-value teal" id="meta-activas">0</div>
+    </div>
+    <div class="card c-green">
+      <div class="card-label">Total Ahorrado</div>
+      <div class="card-value green" id="meta-ahorrado-total">$0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total Objetivo</div>
+      <div class="card-value" id="meta-objetivo-total">$0</div>
+    </div>
+  </div>
+
+  <div id="metasContainer">
+    <div class="empty-state" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;">
+      Sin metas. Agrega tu primera meta financiera ↑<br>
+      <span style="font-size:11px;margin-top:8px;display:block;color:var(--border)">Ejemplos: Fondo de emergencia · Inversión inicial · Viaje</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PÁGINA 9 · PLAN SEMANAL
+     ════════════════════════════════════════════ -->
+<div id="page-plan" class="page">
+<div class="container fade-in">
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">Estrategia</div>
+      <div class="page-title">Plan <span>Semanal</span></div>
+    </div>
+  </div>
+
+  <!-- Análisis -->
+  <div class="section-header" style="margin-top:0;">
+    <div class="section-title"><span class="dot dot-teal"></span>Análisis de la Semana</div>
+  </div>
+  <div class="analisis-grid">
+    <div class="analisis-item"><div class="analisis-label">Mayor fuente de ingreso</div><input class="analisis-input" id="an1" placeholder="ej. Freelance proyecto X" /></div>
+    <div class="analisis-item"><div class="analisis-label">Mayor categoría de gasto</div><input class="analisis-input" id="an2" placeholder="ej. Alimentación" /></div>
+    <div class="analisis-item"><div class="analisis-label">Gasto innecesario detectado</div><input class="analisis-input" id="an3" placeholder="ej. Suscripciones sin usar" /></div>
+    <div class="analisis-item"><div class="analisis-label">Ajuste para próxima semana</div><input class="analisis-input" id="an4" placeholder="ej. Reducir comer fuera" /></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Plan acción -->
+  <div class="section-header">
+    <div class="section-title"><span class="dot dot-green"></span>Plan de Acción</div>
+  </div>
+  <div class="plan-card">
+    <div class="plan-section">
+      <div class="plan-section-label">Objetivo de ingresos esta semana</div>
+      <input class="plan-input" id="objIngresos" placeholder="ej. Generar $5,000 con clientes actuales" />
+    </div>
+    <div class="plan-section">
+      <div class="plan-section-label">Acciones concretas</div>
+      <input class="plan-input" id="accion1" placeholder="1. " />
+      <input class="plan-input" id="accion2" placeholder="2. " />
+      <input class="plan-input" id="accion3" placeholder="3. " />
+    </div>
+    <div class="plan-section">
+      <div class="plan-section-label">Días con registro esta semana</div>
+      <div class="dias-grid" id="diasGrid"></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Reglas -->
+  <div class="section-header">
+    <div class="section-title"><span class="dot dot-purple"></span>Mis Reglas Financieras</div>
+  </div>
+  <div class="reglas-list" id="reglasList"></div>
+</div>
+</div>
+
+<!-- SAVE BAR -->
+<div class="save-bar">
+  <span class="save-hint">Ctrl+S</span>
+  <button class="save-btn" onclick="guardarTodo()">Guardar ↗</button>
+</div>
+<div class="toast" id="toast">✓ Guardado</div>
+
+<script>
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+let state = {
+  mes: 'Julio 2025',
+  metaValor: '',
+  cuentas:  [],
+  ingresos: [],
+  egresos:  [],
+  deudas:   [],
+  pagos:    [],   // pagos futuros
+  flujo:    [],   // semanas
+  metas:    [],
+  analisis: { a1:'', a2:'', a3:'', a4:'' },
+  plan:     { obj:'', a1:'', a2:'', a3:'' },
+  dias:     {},
+  reglas:   ['','','','']
+};
+
+const CATS_EGRESO = ['Alimentación','Transporte','Servicios','Deuda','Salud','Entretenimiento','Ahorro','Inversión','Educación','Renta','Otros'];
+const CATS_PAGO   = ['Deuda','Renta','Servicios','Suscripción','Préstamo','Seguro','Impuesto','Otros'];
+const TIPOS_CUENTA = ['Efectivo','Débito','Crédito','Ahorro','Inversión','Otro'];
+const DIAS_NAMES   = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+function init() {
+  const saved = localStorage.getItem('dashFinanciero_v2');
+  if (saved) { try { state = {...state, ...JSON.parse(saved) }; } catch(e){} }
+  if (!state.flujo || !state.flujo.length) initFlujo();
+
+  document.getElementById('mesDisplay').textContent = state.mes;
+  document.getElementById('metaValor').value = state.metaValor;
+
+  renderCuentas();
+  renderIngresos();
+  renderEgresos();
+  renderDeudas();
+  renderPagos();
+  renderFlujo();
+  renderMetas();
+  renderCalendario();
+  renderDias();
+  renderReglas();
+  loadAnalisis();
+  loadPlan();
+  calcTotals();
+  updatePortada();
+}
+
+function initFlujo() {
+  state.flujo = [
+    { label: 'Semana 1', ing: 0, eg: 0 },
+    { label: 'Semana 2', ing: 0, eg: 0 },
+    { label: 'Semana 3', ing: 0, eg: 0 },
+    { label: 'Semana 4', ing: 0, eg: 0 },
+  ];
+}
+
+// ════════════════════════════════════════════
+//  NAV
+// ════════════════════════════════════════════
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = { portada:0, cuentas:1, ingresos:2, egresos:3, deudas:4, pagos:5, calendario:6, flujo:7, metas:8, plan:9 };
+  if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+  if (id === 'calendario') renderCalendario();
+  window.scrollTo(0, 0);
+}
+
+// ════════════════════════════════════════════
+//  CUENTAS
+// ════════════════════════════════════════════
+function renderCuentas() {
+  const c = document.getElementById('cuentasContainer');
+  if (!state.cuentas.length) {
+    c.innerHTML = '<div class="empty-state" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;">Agrega tus cuentas bancarias, efectivo y tarjetas.</div>';
+    updateCuentasTotals(); return;
+  }
+  c.innerHTML = state.cuentas.map((ct, i) => {
+    const iconMap = { Efectivo:'💵', Débito:'💳', Crédito:'💎', Ahorro:'🏦', Inversión:'📈', Otro:'📂' };
+    return `
+    <div class="account-card">
+      <div class="account-icon">${iconMap[ct.tipo] || '💳'}</div>
+      <div class="account-info">
+        <div class="account-name"><input value="${ct.nombre}" placeholder="Nombre de cuenta" oninput="state.cuentas[${i}].nombre=this.value;" /></div>
+        <div class="account-type">
+          <select onchange="state.cuentas[${i}].tipo=this.value;renderCuentas();">
+            ${TIPOS_CUENTA.map(t=>`<option value="${t}" ${ct.tipo===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="account-balance">
+        <input type="number" value="${ct.saldo}" placeholder="0" oninput="state.cuentas[${i}].saldo=parseFloat(this.value)||0;updateCuentasTotals();calcTotals();" />
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">MXN</div>
+      </div>
+      <button class="account-delete" onclick="deleteCuenta(${i})">×</button>
+    </div>`;
+  }).join('');
+  updateCuentasTotals();
+}
+function updateCuentasTotals() {
+  const total   = state.cuentas.reduce((s,c)=>s+c.saldo,0);
+  const debito  = state.cuentas.filter(c=>['Efectivo','Débito','Ahorro'].includes(c.tipo)).reduce((s,c)=>s+c.saldo,0);
+  const credito = state.cuentas.filter(c=>c.tipo==='Crédito').reduce((s,c)=>s+c.saldo,0);
+  document.getElementById('cuentas-total').textContent   = '$'+fmt(total);
+  document.getElementById('cuentas-debito').textContent  = '$'+fmt(debito);
+  document.getElementById('cuentas-credito').textContent = '$'+fmt(credito);
+  document.getElementById('sum-cuentas').textContent     = '$'+fmt(total);
+}
+function addCuenta() {
+  state.cuentas.push({ nombre:'', tipo:'Débito', saldo:0 });
+  renderCuentas();
+}
+function deleteCuenta(i) { state.cuentas.splice(i,1); renderCuentas(); calcTotals(); }
+
+// ════════════════════════════════════════════
+//  INGRESOS
+// ════════════════════════════════════════════
+function renderIngresos() {
+  const body = document.getElementById('ingresosBody');
+  if (!state.ingresos.length) {
+    body.innerHTML='<div class="empty-state">Sin ingresos. Agrega el primero ↑</div>'; updateIngStats(); return;
+  }
+  body.innerHTML = state.ingresos.map((r,i)=>`
+    <div class="entry-row" style="grid-template-columns:100px 130px 1fr 1fr 32px;">
+      <div class="entry-cell"><input type="date" value="${r.fecha}" onchange="state.ingresos[${i}].fecha=this.value;calcTotals();" /></div>
+      <div class="entry-cell monto-green"><input type="number" placeholder="0" value="${r.monto}" onchange="state.ingresos[${i}].monto=parseFloat(this.value)||0;calcTotals();" /></div>
+      <div class="entry-cell"><input placeholder="Fuente" value="${r.fuente}" oninput="state.ingresos[${i}].fuente=this.value;" /></div>
+      <div class="entry-cell"><input placeholder="Notas" value="${r.notas}" oninput="state.ingresos[${i}].notas=this.value;" /></div>
+      <div class="entry-cell"><button class="cell-delete" onclick="deleteIngreso(${i})">×</button></div>
+    </div>`).join('');
+  updateIngStats();
+}
+function updateIngStats() {
+  const total = state.ingresos.reduce((s,r)=>s+(parseFloat(r.monto)||0),0);
+  document.getElementById('ing-total').textContent='$'+fmt(total);
+  document.getElementById('ing-count').textContent=state.ingresos.length;
+  const last = state.ingresos.length ? '$'+fmt(state.ingresos[state.ingresos.length-1].monto) : '—';
+  document.getElementById('ing-ultimo').textContent=last;
+}
+function addIngreso()    { state.ingresos.push({fecha:today(),monto:0,fuente:'',notas:''}); renderIngresos();calcTotals(); }
+function deleteIngreso(i){ state.ingresos.splice(i,1); renderIngresos();calcTotals(); }
+
+// ════════════════════════════════════════════
+//  EGRESOS
+// ════════════════════════════════════════════
+function renderEgresos() {
+  const body = document.getElementById('egresosBody');
+  if (!state.egresos.length) {
+    body.innerHTML='<div class="empty-state">Sin egresos. Agrega el primero ↑</div>'; updateEgStats(); return;
+  }
+  body.innerHTML = state.egresos.map((r,i)=>`
+    <div class="entry-row" style="grid-template-columns:100px 130px 140px 1fr 32px;">
+      <div class="entry-cell"><input type="date" value="${r.fecha}" onchange="state.egresos[${i}].fecha=this.value;calcTotals();" /></div>
+      <div class="entry-cell monto-red"><input type="number" placeholder="0" value="${r.monto}" onchange="state.egresos[${i}].monto=parseFloat(this.value)||0;calcTotals();" /></div>
+      <div class="entry-cell">
+        <select style="background:transparent;border:none;color:var(--muted);font-family:var(--font-mono);font-size:12px;outline:none;width:100%;" onchange="state.egresos[${i}].cat=this.value;calcTotals();">
+          ${CATS_EGRESO.map(c=>`<option value="${c}" ${r.cat===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="entry-cell"><input placeholder="Notas" value="${r.notas}" oninput="state.egresos[${i}].notas=this.value;" /></div>
+      <div class="entry-cell"><button class="cell-delete" onclick="deleteEgreso(${i})">×</button></div>
+    </div>`).join('');
+  updateEgStats();
+}
+function updateEgStats() {
+  const total = state.egresos.reduce((s,r)=>s+(parseFloat(r.monto)||0),0);
+  document.getElementById('eg-total').textContent='$'+fmt(total);
+  document.getElementById('eg-count').textContent=state.egresos.length;
+  // mayor cat
+  const cats = {};
+  state.egresos.forEach(r=>{ cats[r.cat]=(cats[r.cat]||0)+(parseFloat(r.monto)||0); });
+  const top = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('eg-cat').textContent = top ? top[0] : '—';
+}
+function addEgreso()    { state.egresos.push({fecha:today(),monto:0,cat:'Alimentación',notas:''}); renderEgresos();calcTotals(); }
+function deleteEgreso(i){ state.egresos.splice(i,1); renderEgresos();calcTotals(); }
+
+// ════════════════════════════════════════════
+//  DEUDAS
+// ════════════════════════════════════════════
+function renderDeudas() {
+  const c = document.getElementById('deudasContainer');
+  if (!state.deudas.length) {
+    c.innerHTML='<div class="empty-state" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;">Sin deudas registradas.</div>';
+    updateDeudaHeaders(); return;
+  }
+  c.innerHTML = state.deudas.map((d,i)=>{
+    const pct = d.total>0 ? Math.min(100,Math.round((d.pagado/d.total)*100)) : 0;
+    return `
+    <div class="deuda-card">
+      <div style="flex:1">
+        <div class="deuda-nombre"><input value="${d.nombre}" placeholder="Nombre de la deuda" oninput="state.deudas[${i}].nombre=this.value;" /></div>
+        <div class="deuda-fields" style="margin-top:10px;">
+          <div class="deuda-field"><label>Total Deuda</label><input type="number" value="${d.total}" placeholder="0" oninput="state.deudas[${i}].total=parseFloat(this.value)||0;updateDeudaBar(${i});updateDeudaHeaders();" /></div>
+          <div class="deuda-field"><label>Ya Pagado</label><input type="number" value="${d.pagado}" placeholder="0" oninput="state.deudas[${i}].pagado=parseFloat(this.value)||0;updateDeudaBar(${i});updateDeudaHeaders();" /></div>
+          <div class="deuda-field"><label>Fecha Límite</label><input type="date" value="${d.fecha}" oninput="state.deudas[${i}].fecha=this.value;" /></div>
+          <div class="deuda-field"><label>Pago Mensual</label><input type="number" value="${d.mensual}" placeholder="0" oninput="state.deudas[${i}].mensual=parseFloat(this.value)||0;" /></div>
+        </div>
+        <div class="deuda-bar" style="margin-top:12px;"><div class="deuda-fill" id="dbar-${i}" style="width:${pct}%"></div></div>
+        <div class="deuda-pct" id="dpct-${i}">${pct}% liquidado · Pendiente: $${fmt(d.total-d.pagado)}</div>
+      </div>
+      <button class="deuda-delete" onclick="deleteDeuda(${i})">×</button>
+    </div>`;
+  }).join('');
+  updateDeudaHeaders();
+}
+function updateDeudaBar(i) {
+  const d=state.deudas[i]; const pct=d.total>0?Math.min(100,Math.round((d.pagado/d.total)*100)):0;
+  const bar=document.getElementById(`dbar-${i}`); const el=document.getElementById(`dpct-${i}`);
+  if(bar) bar.style.width=pct+'%';
+  if(el)  el.textContent=`${pct}% liquidado · Pendiente: $${fmt(d.total-d.pagado)}`;
+}
+function updateDeudaHeaders() {
+  const pendiente = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
+  const pagado    = state.deudas.reduce((s,d)=>s+d.pagado,0);
+  document.getElementById('deuda-total-header').textContent='$'+fmt(pendiente);
+  document.getElementById('deuda-pagado-header').textContent='$'+fmt(pagado);
+  document.getElementById('deuda-count').textContent=state.deudas.length;
+  document.getElementById('sum-deuda').textContent='$'+fmt(pendiente);
+}
+function addDeuda()    { state.deudas.push({nombre:'',total:0,pagado:0,fecha:'',mensual:0}); renderDeudas(); }
+function deleteDeuda(i){ state.deudas.splice(i,1); renderDeudas(); }
+
+// ════════════════════════════════════════════
+//  PAGOS FUTUROS
+// ════════════════════════════════════════════
+function renderPagos() {
+  const body = document.getElementById('pagosBody');
+  const now  = new Date(); now.setHours(0,0,0,0);
+  const in7  = new Date(now); in7.setDate(in7.getDate()+7);
+
+  if (!state.pagos.length) {
+    body.innerHTML='<div class="empty-state">Sin pagos registrados.</div>';
+    updatePagosStats(); updateVencPreview(); return;
+  }
+
+  const sorted = [...state.pagos].map((p,i)=>({...p,_i:i}))
+    .sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+
+  body.innerHTML = sorted.map((p)=>{
+    const i=p._i;
+    const fd = p.fecha ? new Date(p.fecha+'T12:00:00') : null;
+    const isUrgente = fd && fd<=now && p.estado!=='Pagado';
+    const isProximo = fd && fd>now && fd<=in7 && p.estado!=='Pagado';
+    const badge = isUrgente ? '<span class="urgente-badge">VENCIDO</span>' : isProximo ? '<span class="proximo-badge">PRÓXIMO</span>' : '';
+    return `
+    <div class="pago-row entry-row ${isUrgente?'urgente-row':''}" style="grid-template-columns:100px 1fr 120px 110px 80px 32px;">
+      <div class="entry-cell"><input type="date" value="${p.fecha}" onchange="state.pagos[${i}].fecha=this.value;renderPagos();" /></div>
+      <div class="entry-cell"><input placeholder="Concepto" value="${p.concepto}" oninput="state.pagos[${i}].concepto=this.value;" />${badge}</div>
+      <div class="entry-cell pc3 monto-warn"><input type="number" placeholder="0" value="${p.monto}" onchange="state.pagos[${i}].monto=parseFloat(this.value)||0;updatePagosStats();" /></div>
+      <div class="entry-cell pc4">
+        <select style="background:transparent;border:none;color:var(--muted);font-family:var(--font-mono);font-size:12px;outline:none;width:100%;" onchange="state.pagos[${i}].cat=this.value;">
+          ${CATS_PAGO.map(c=>`<option value="${c}" ${p.cat===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="entry-cell">
+        <select style="background:transparent;border:none;font-family:var(--font-mono);font-size:12px;outline:none;width:100%;color:${p.estado==='Pagado'?'var(--accent)':p.estado==='Pendiente'?'var(--warn)':'var(--danger)'};" onchange="state.pagos[${i}].estado=this.value;renderPagos();">
+          <option value="Pendiente" ${p.estado==='Pendiente'?'selected':''}>Pendiente</option>
+          <option value="Pagado"    ${p.estado==='Pagado'?'selected':''}>Pagado</option>
+          <option value="Vencido"   ${p.estado==='Vencido'?'selected':''}>Vencido</option>
+        </select>
+      </div>
+      <div class="entry-cell"><button class="cell-delete" onclick="deletePago(${i})">×</button></div>
+    </div>`;
+  }).join('');
+  updatePagosStats();
+  updateVencPreview();
+}
+function updatePagosStats() {
+  const now=new Date(); now.setHours(0,0,0,0);
+  const in7=new Date(now); in7.setDate(in7.getDate()+7);
+  const semana = state.pagos.filter(p=>{
+    const fd=p.fecha?new Date(p.fecha+'T12:00:00'):null;
+    return fd && fd>=now && fd<=in7 && p.estado!=='Pagado';
+  }).reduce((s,p)=>s+(p.monto||0),0);
+  const mes = state.pagos.filter(p=>{
+    const fd=p.fecha?new Date(p.fecha+'T12:00:00'):null;
+    return fd && fd.getMonth()===now.getMonth() && fd.getFullYear()===now.getFullYear() && p.estado!=='Pagado';
+  }).reduce((s,p)=>s+(p.monto||0),0);
+  const vencidos = state.pagos.filter(p=>{
+    const fd=p.fecha?new Date(p.fecha+'T12:00:00'):null;
+    return fd && fd<now && p.estado!=='Pagado';
+  }).length;
+  document.getElementById('pf-semana').textContent='$'+fmt(semana);
+  document.getElementById('pf-mes').textContent='$'+fmt(mes);
+  document.getElementById('pf-vencidos').textContent=vencidos;
+}
+function updateVencPreview() {
+  const now=new Date(); now.setHours(0,0,0,0);
+  const in14=new Date(now); in14.setDate(in14.getDate()+14);
+  const proximos = state.pagos.filter(p=>{
+    const fd=p.fecha?new Date(p.fecha+'T12:00:00'):null;
+    return fd && fd<=in14 && p.estado!=='Pagado';
+  }).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha)).slice(0,4);
+  const body=document.getElementById('venc-preview-body');
+  if (!proximos.length) {
+    body.innerHTML='<div class="empty-state">No hay pagos próximos.</div>'; return;
+  }
+  body.innerHTML=proximos.map(p=>{
+    const fd=new Date(p.fecha+'T12:00:00');
+    const diff=Math.round((fd-now)/(1000*60*60*24));
+    const label=diff<0?`Vencido hace ${Math.abs(diff)}d`:diff===0?'HOY':diff===1?'Mañana':`En ${diff} días`;
+    const color=diff<0?'var(--danger)':diff<=3?'var(--warn)':'var(--muted)';
+    return `<div class="entry-row" style="grid-template-columns:1fr 120px 100px;">
+      <div class="entry-cell">${p.concepto||'Sin nombre'}</div>
+      <div class="entry-cell" style="color:var(--warn);">$${fmt(p.monto)}</div>
+      <div class="entry-cell" style="color:${color};font-size:11px;">${label}</div>
+    </div>`;
+  }).join('');
+  // actualizar widget portada
+  if (proximos.length) {
+    const p=proximos[0];
+    const fd=new Date(p.fecha+'T12:00:00');
+    const diff=Math.round((fd-now)/(1000*60*60*24));
+    const label=diff<0?'VENCIDO':diff===0?'HOY':diff===1?'Mañana':`En ${diff}d`;
+    document.getElementById('hoy-prox-pago').textContent=p.concepto||'Pago';
+    document.getElementById('hoy-prox-fecha').textContent=`$${fmt(p.monto)} · ${label}`;
+  }
+}
+function addPago()    { state.pagos.push({fecha:today(),concepto:'',monto:0,cat:'Deuda',estado:'Pendiente'}); renderPagos(); }
+function deletePago(i){ state.pagos.splice(i,1); renderPagos(); }
+
+// ════════════════════════════════════════════
+//  CALENDARIO
+// ════════════════════════════════════════════
+function renderCalendario() {
+  const lbl=document.getElementById('calMonthLabel');
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  lbl.textContent=meses[calMonth]+' '+calYear;
+
+  // day-of-week labels
+  const dlEl=document.getElementById('calDayLabels');
+  dlEl.innerHTML=['L','M','X','J','V','S','D'].map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+
+  const now=new Date(); now.setHours(0,0,0,0);
+  const firstDay=new Date(calYear,calMonth,1);
+  const lastDay =new Date(calYear,calMonth+1,0);
+  let startDow=(firstDay.getDay()+6)%7; // lunes=0
+
+  // pagos del mes indexados por día
+  const pagoDias={};
+  state.pagos.forEach(p=>{
+    if (!p.fecha) return;
+    const d=new Date(p.fecha+'T12:00:00');
+    if (d.getFullYear()===calYear && d.getMonth()===calMonth) {
+      const day=d.getDate();
+      if (!pagoDias[day]) pagoDias[day]=[];
+      pagoDias[day].push(p);
+    }
+  });
+
+  let cells='';
+  // blank cells before first
+  for (let i=0;i<startDow;i++) cells+=`<div class="cal-day other-month"><span class="cal-num" style="color:var(--border)"></span></div>`;
+  for (let d=1;d<=lastDay.getDate();d++) {
+    const thisDate=new Date(calYear,calMonth,d);
+    const isToday=thisDate.getTime()===now.getTime();
+    const pagos=pagoDias[d]||[];
+    const hasUrgente=pagos.some(p=>p.estado!=='Pagado'&&new Date(p.fecha+'T12:00:00')<=now);
+    const hasPago=pagos.some(p=>p.estado!=='Pagado');
+    const cls=`cal-day ${isToday?'today-mark':''} ${hasUrgente?'urgente':hasPago?'has-payment':''}`;
+    const amtStr=pagos.length?'$'+fmt(pagos.reduce((s,p)=>s+p.monto,0)):'';
+    cells+=`<div class="${cls}" title="${pagos.map(p=>p.concepto).join(', ')}">
+      <span class="cal-num">${d}</span>
+      ${amtStr?`<span class="cal-amt">${amtStr}</span>`:''}
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML=cells;
+
+  // eventos list
+  const evList=document.getElementById('calEventsList');
+  const mesEvents=state.pagos.filter(p=>{
+    if (!p.fecha) return false;
+    const d=new Date(p.fecha+'T12:00:00');
+    return d.getFullYear()===calYear && d.getMonth()===calMonth;
+  }).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  if (!mesEvents.length) { evList.innerHTML='<div class="empty-state">No hay pagos en este mes.</div>'; return; }
+  evList.innerHTML=mesEvents.map(p=>{
+    const color=p.estado==='Pagado'?'var(--accent)':p.estado==='Vencido'?'var(--danger)':'var(--warn)';
+    return `<div class="entry-row" style="grid-template-columns:100px 1fr 120px 90px;">
+      <div class="entry-cell" style="color:var(--muted);font-size:12px;">${p.fecha}</div>
+      <div class="entry-cell">${p.concepto||'Sin nombre'}</div>
+      <div class="entry-cell" style="color:var(--warn);">$${fmt(p.monto)}</div>
+      <div class="entry-cell" style="color:${color};font-size:11px;">${p.estado}</div>
+    </div>`;
+  }).join('');
+}
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendario(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendario(); }
+
+// ════════════════════════════════════════════
+//  FLUJO DE EFECTIVO
+// ════════════════════════════════════════════
+function renderFlujo() {
+  const c=document.getElementById('flujoContainer');
+  const maxVal=Math.max(...state.flujo.map(s=>Math.max(s.ing,s.eg)),1);
+
+  c.innerHTML=state.flujo.map((s,i)=>{
+    const net=s.ing-s.eg;
+    const hIn=Math.max(4,Math.round((s.ing/maxVal)*44));
+    const hOut=Math.max(4,Math.round((s.eg/maxVal)*44));
+    return `
+    <div class="flujo-week">
+      <div class="flujo-header">
+        <div class="flujo-label">${s.label}</div>
+        <div class="flujo-net ${net>=0?'pos':'neg'}">${net>=0?'+':''}$${fmt(net)}</div>
+      </div>
+      <div class="flujo-bars">
+        <div class="flujo-bar-wrap">
+          <div class="flujo-bar in" style="height:${hIn}px"></div>
+          <div class="flujo-bar-label">ING</div>
+        </div>
+        <div class="flujo-bar-wrap">
+          <div class="flujo-bar out" style="height:${hOut}px"></div>
+          <div class="flujo-bar-label">EGR</div>
+        </div>
+      </div>
+      <div class="flujo-inputs" style="margin-top:12px;">
+        <div class="flujo-field">
+          <label>Ingresos proyectados</label>
+          <input type="number" value="${s.ing}" placeholder="0" oninput="state.flujo[${i}].ing=parseFloat(this.value)||0;renderFlujo();updateFlujoTotals();" />
+        </div>
+        <div class="flujo-field">
+          <label>Egresos proyectados</label>
+          <input type="number" value="${s.eg}" placeholder="0" oninput="state.flujo[${i}].eg=parseFloat(this.value)||0;renderFlujo();updateFlujoTotals();" />
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  updateFlujoTotals();
+}
+function updateFlujoTotals() {
+  const ing=state.flujo.reduce((s,w)=>s+w.ing,0);
+  const eg =state.flujo.reduce((s,w)=>s+w.eg,0);
+  document.getElementById('flujo-ing-total').textContent='$'+fmt(ing);
+  document.getElementById('flujo-eg-total').textContent='$'+fmt(eg);
+  const el=document.getElementById('flujo-neto');
+  el.textContent=(ing-eg>=0?'+':'')+'$'+fmt(ing-eg);
+  el.className='card-value '+(ing-eg>=0?'teal':'red');
+}
+
+// ════════════════════════════════════════════
+//  METAS
+// ════════════════════════════════════════════
+function renderMetas() {
+  const c=document.getElementById('metasContainer');
+  if (!state.metas.length) {
+    c.innerHTML='<div class="empty-state" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;">Sin metas. Agrega tu primera meta financiera ↑<br><span style="font-size:11px;margin-top:8px;display:block;color:var(--border)">Ejemplos: Fondo de emergencia · Inversión inicial · Viaje</span></div>';
+    updateMetasStats(); return;
+  }
+  const FILLS=['fill-green','fill-purple','fill-warn'];
+  const COLORS=['var(--accent)','var(--purple)','var(--warn)'];
+  c.innerHTML=state.metas.map((m,i)=>{
+    const pct=m.objetivo>0?Math.min(100,Math.round((m.actual/m.objetivo)*100)):0;
+    const fill=FILLS[i%FILLS.length];
+    const color=COLORS[i%COLORS.length];
+    const restante=m.objetivo-m.actual;
+    const mesesRestantes=m.mensual>0&&restante>0?Math.ceil(restante/m.mensual):null;
+    return `
+    <div class="meta-goal">
+      <div class="meta-goal-header">
+        <div class="meta-goal-name" style="flex:1"><input value="${m.nombre}" placeholder="Nombre de la meta" oninput="state.metas[${i}].nombre=this.value;" /></div>
+        <div class="meta-goal-pct" style="color:${color}">${pct}%</div>
+        <button class="cell-delete" style="margin-left:12px;" onclick="deleteMeta(${i})">×</button>
+      </div>
+      <div class="meta-goal-fields">
+        <div class="meta-goal-field"><label>Objetivo</label><input type="number" value="${m.objetivo}" placeholder="0" oninput="state.metas[${i}].objetivo=parseFloat(this.value)||0;renderMetas();" /></div>
+        <div class="meta-goal-field"><label>Ahorrado</label><input type="number" value="${m.actual}" placeholder="0" oninput="state.metas[${i}].actual=parseFloat(this.value)||0;renderMetas();" /></div>
+        <div class="meta-goal-field"><label>Ahorro mensual</label><input type="number" value="${m.mensual}" placeholder="0" oninput="state.metas[${i}].mensual=parseFloat(this.value)||0;renderMetas();" /></div>
+        <div class="meta-goal-field"><label>Categoría</label>
+          <select style="background:transparent;border:none;color:var(--muted);font-family:var(--font-mono);font-size:13px;outline:none;width:110px;" onchange="state.metas[${i}].cat=this.value;">
+            ${['Ahorro','Emergencia','Inversión','Viaje','Educación','Otro'].map(c=>`<option value="${c}" ${m.cat===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="progress-track"><div class="progress-fill ${fill}" style="width:${pct}%"></div></div>
+      <div class="meta-goal-status">
+        Pendiente: $${fmt(Math.max(0,restante))} 
+        ${mesesRestantes?` · ~${mesesRestantes} meses para lograrlo`:''}
+      </div>
+    </div>`;
+  }).join('');
+  updateMetasStats();
+}
+function updateMetasStats() {
+  document.getElementById('meta-activas').textContent=state.metas.length;
+  document.getElementById('meta-ahorrado-total').textContent='$'+fmt(state.metas.reduce((s,m)=>s+m.actual,0));
+  document.getElementById('meta-objetivo-total').textContent='$'+fmt(state.metas.reduce((s,m)=>s+m.objetivo,0));
+}
+function addMeta()    { state.metas.push({nombre:'',objetivo:0,actual:0,mensual:0,cat:'Ahorro'}); renderMetas(); }
+function deleteMeta(i){ state.metas.splice(i,1); renderMetas(); }
+
+// ════════════════════════════════════════════
+//  PLAN / ANÁLISIS / DÍAS / REGLAS
+// ════════════════════════════════════════════
+function renderDias() {
+  const g=document.getElementById('diasGrid');
+  const hoy=new Date().getDay();
+  const mapIdx=[6,0,1,2,3,4,5];
+  const todayIdx=mapIdx[hoy];
+  g.innerHTML=DIAS_NAMES.map((d,i)=>{
+    const isChecked=state.dias[weekKey()+'-'+i];
+    const isToday=i===todayIdx;
+    return `<button class="dia-btn ${isChecked?'checked':''} ${isToday&&!isChecked?'today':''}" onclick="toggleDia(${i},this)">
+      ${isChecked?'✓':d}<span>${d}</span>
+    </button>`;
+  }).join('');
+}
+function toggleDia(i,btn) {
+  const key=weekKey()+'-'+i;
+  state.dias[key]=!state.dias[key];
+  btn.className='dia-btn'+(state.dias[key]?' checked':'');
+  btn.innerHTML=(state.dias[key]?'✓':DIAS_NAMES[i])+'<span>'+DIAS_NAMES[i]+'</span>';
+}
+function renderReglas() {
+  document.getElementById('reglasList').innerHTML=state.reglas.map((r,i)=>`
+    <div class="regla-item">
+      <div class="regla-num">0${i+1}</div>
+      <input class="regla-input" placeholder="Escribe tu regla financiera..." value="${r}" oninput="state.reglas[${i}]=this.value;" />
+    </div>`).join('');
+}
+function loadAnalisis() {
+  ['an1','an2','an3','an4'].forEach((id,i)=>{
+    document.getElementById(id).value=state.analisis['a'+(i+1)];
+    document.getElementById(id).addEventListener('input',function(){ state.analisis['a'+(i+1)]=this.value; });
+  });
+}
+function loadPlan() {
+  document.getElementById('objIngresos').value=state.plan.obj;
+  document.getElementById('accion1').value=state.plan.a1;
+  document.getElementById('accion2').value=state.plan.a2;
+  document.getElementById('accion3').value=state.plan.a3;
+  document.getElementById('objIngresos').addEventListener('input',function(){ state.plan.obj=this.value; });
+  document.getElementById('accion1').addEventListener('input',function(){ state.plan.a1=this.value; });
+  document.getElementById('accion2').addEventListener('input',function(){ state.plan.a2=this.value; });
+  document.getElementById('accion3').addEventListener('input',function(){ state.plan.a3=this.value; });
+}
+
+// ════════════════════════════════════════════
+//  CÁLCULOS GLOBALES
+// ════════════════════════════════════════════
+function calcTotals() {
+  const ing=state.ingresos.reduce((s,r)=>s+(parseFloat(r.monto)||0),0);
+  const eg =state.egresos.reduce((s,r)=>s+(parseFloat(r.monto)||0),0);
+  const net=ing-eg;
+  document.getElementById('sum-ing').textContent='$'+fmt(ing);
+  document.getElementById('sum-eg').textContent='$'+fmt(eg);
+  const meta=parseFloat(document.getElementById('metaValor').value)||0;
+  state.metaValor=document.getElementById('metaValor').value;
+  const ahorro=Math.max(0,net);
+  const pct=meta>0?Math.min(100,Math.round((ahorro/meta)*100)):0;
+  document.getElementById('metaAhorradoPortada').textContent='$'+fmt(ahorro);
+  document.getElementById('metaPctPortada').textContent=pct+'%';
+  document.getElementById('progressFillPortada').style.width=pct+'%';
+  updateIngStats();
+  updateEgStats();
+  updatePortada();
+}
+function updatePortada() {
+  const ing=state.ingresos.reduce((s,r)=>s+(parseFloat(r.monto)||0),0);
+  const eg =state.egresos.reduce((s,r)=>s+(parseFloat(r.monto)||0),0);
+  const net=ing-eg;
+  // Q1: cuánto puedo gastar
+  document.getElementById('hoy-gastar').textContent='$'+fmt(Math.max(0,net));
+  document.getElementById('hoy-gastar-sub').textContent=net>=0?'Balance neto disponible':'Balance negativo — revisa egresos';
+  // Q3: meta status
+  const meta=parseFloat(state.metaValor)||0;
+  const pct=meta>0?Math.min(100,Math.round((Math.max(0,net)/meta)*100)):0;
+  if (meta>0) {
+    document.getElementById('hoy-meta-status').textContent=pct>100?'Adelantado':pct>=80?'En línea':pct>=50?'Al día':'Atrasado';
+    document.getElementById('hoy-meta-sub').textContent=`${pct}% de meta · $${fmt(meta)} objetivo`;
+  }
+}
+
+// ════════════════════════════════════════════
+//  GUARDAR
+// ════════════════════════════════════════════
+function guardarTodo() {
+  localStorage.setItem('dashFinanciero_v2', JSON.stringify(state));
+  const t=document.getElementById('toast'); t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();guardarTodo();} });
+
+// ════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════
+function editMes() {
+  const m=prompt('Mes (ej. Agosto 2025):',state.mes);
+  if(m){ state.mes=m; document.getElementById('mesDisplay').textContent=m; }
+}
+function fmt(n){ return Number(n).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function weekKey(){ const d=new Date(); return `${d.getFullYear()}-W${getWeekNum(d)}`; }
+function getWeekNum(d){ const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); date.setUTCDate(date.getUTCDate()+4-(date.getUTCDay()||7)); const y=new Date(Date.UTC(date.getUTCFullYear(),0,1)); return Math.ceil((((date-y)/86400000)+1)/7); }
+
+init();
+</script>
+</body>
+</html>

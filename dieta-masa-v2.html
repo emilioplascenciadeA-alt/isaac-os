@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASA SYSTEM 2.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080a0f;
+  --bg2: #0d1018;
+  --card: #111520;
+  --card2: #161b28;
+  --border: #1e2535;
+  --orange: #ff6b2b;
+  --pink: #ff2d8a;
+  --cyan: #00e5ff;
+  --green: #39ff14;
+  --yellow: #ffe033;
+  --text: #f0f2f8;
+  --muted: #5a6480;
+  --muted2: #8a92b2;
+  --font-h: 'Barlow Condensed', sans-serif;
+  --font-b: 'Barlow', sans-serif;
+  --grad-main: linear-gradient(135deg, #ff6b2b, #ff2d8a);
+  --grad-cool: linear-gradient(135deg, #00e5ff, #39ff14);
+  --grad-night: linear-gradient(135deg, #7b2fff, #ff2d8a);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-b);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.35;
+}
+
+/* ── HEADER ── */
+.site-header {
+  position: relative;
+  padding: 28px 20px 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,107,43,0.07) 0%, transparent 100%);
+}
+
+.header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--grad-main);
+  color: #fff;
+  font-family: var(--font-h);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  padding: 4px 14px;
+  border-radius: 2px;
+  margin-bottom: 10px;
+}
+
+.site-title {
+  font-family: var(--font-h);
+  font-size: clamp(42px, 12vw, 80px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -1px;
+}
+
+.site-title .t1 { color: var(--orange); }
+.site-title .t2 { color: var(--text); }
+.site-title .t3 {
+  background: var(--grad-cool);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.site-sub {
+  font-size: 12px;
+  color: var(--muted2);
+  letter-spacing: 2px;
+  margin-top: 8px;
+}
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 16px 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 8px;
+  font-family: var(--font-h);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border: none;
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: var(--card2);
+  color: var(--text);
+  border-bottom-color: var(--orange);
+}
+
+.tab-btn:hover:not(.active) { color: var(--muted2); }
+
+/* ── PANELS ── */
+.panel { display: none; padding: 20px 16px 60px; animation: fadeIn 0.3s ease; }
+.panel.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── DAY SELECTOR ── */
+.day-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 20px;
+  scrollbar-width: none;
+}
+.day-strip::-webkit-scrollbar { display: none; }
+
+.day-pill {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  font-family: var(--font-h);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--muted2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.day-pill.active {
+  background: var(--grad-main);
+  border-color: transparent;
+  color: #fff;
+}
+
+.day-pill.rest { opacity: 0.5; }
+
+/* ── NODE GRID ── */
+.node-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── NODE CARD ── */
+.node-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.node-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.node-card.morning::before { background: linear-gradient(90deg, var(--orange), var(--yellow)); }
+.node-card.afternoon::before { background: linear-gradient(90deg, var(--pink), var(--orange)); }
+.node-card.night::before { background: linear-gradient(90deg, #7b2fff, var(--pink)); }
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--card2);
+  border-bottom: 1px solid var(--border);
+}
+
+.node-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.morning .node-icon { background: rgba(255,107,43,0.15); box-shadow: 0 0 16px rgba(255,107,43,0.2); }
+.afternoon .node-icon { background: rgba(255,45,138,0.15); box-shadow: 0 0 16px rgba(255,45,138,0.2); }
+.night .node-icon { background: rgba(123,47,255,0.15); box-shadow: 0 0 16px rgba(123,47,255,0.2); }
+
+.node-title { font-family: var(--font-h); font-size: 22px; font-weight: 900; letter-spacing: 1px; }
+.morning .node-title { color: var(--orange); }
+.afternoon .node-title { color: var(--pink); }
+.night .node-title { color: #b47fff; }
+
+.node-time-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+
+.node-time-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--cyan);
+  font-family: var(--font-b);
+  font-size: 13px;
+  font-weight: 600;
+  width: 64px;
+  outline: none;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.node-body { padding: 14px 16px; }
+
+/* ── MEAL / SNACK SLOTS ── */
+.slot-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-h);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted2);
+  margin-bottom: 8px;
+}
+
+.slot-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.morning .slot-dot { background: var(--orange); }
+.afternoon .slot-dot { background: var(--pink); }
+.night .slot-dot { background: #b47fff; }
+
+.meal-input {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-b);
+  font-size: 13px;
+  padding: 10px 12px;
+  outline: none;
+  resize: none;
+  min-height: 58px;
+  transition: border-color 0.15s;
+  line-height: 1.5;
+}
+
+.meal-input:focus { border-color: var(--orange); }
+.meal-input::placeholder { color: var(--border); font-style: italic; font-size: 12px; }
+
+.slot-divider { height: 10px; }
+
+/* ── MACRO DISPLAY ── */
+.macro-bar {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.calc-btn {
+  padding: 5px 12px;
+  font-family: var(--font-h);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--grad-main);
+  color: #fff;
+}
+
+.calc-btn:hover { opacity: 0.85; transform: scale(0.98); }
+.calc-btn:active { transform: scale(0.94); }
+
+.macro-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+}
+
+.m-kcal { background: rgba(255,107,43,0.12); color: var(--orange); border: 1px solid rgba(255,107,43,0.25); }
+.m-prot { background: rgba(0,229,255,0.10); color: var(--cyan); border: 1px solid rgba(0,229,255,0.2); }
+.m-carb { background: rgba(255,224,51,0.10); color: var(--yellow); border: 1px solid rgba(255,224,51,0.2); }
+.m-fat  { background: rgba(57,255,20,0.08); color: var(--green); border: 1px solid rgba(57,255,20,0.15); }
+
+.macro-loading {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 4px 0;
+  display: none;
+}
+
+/* ── DAILY TOTAL BAR ── */
+.daily-total {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dt-label {
+  font-family: var(--font-h);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--muted2);
+  margin-right: 4px;
+}
+
+.dt-pill {
+  font-family: var(--font-h);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.dt-kcal { color: var(--orange); }
+.dt-prot { color: var(--cyan); }
+.dt-carb { color: var(--yellow); }
+
+/* ── WEEK WEIGHT ── */
+.week-weights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* ── PLANNER PANEL ── */
+.planner-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.ingr-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ingr-card-header {
+  padding: 12px 16px;
+  background: var(--card2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-h);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--cyan);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ingr-area {
+  width: 100%;
+  min-height: 200px;
+  background: var(--bg2);
+  border: none;
+  color: var(--text);
+  font-family: var(--font-b);
+  font-size: 13px;
+  padding: 14px;
+  resize: vertical;
+  outline: none;
+  line-height: 1.8;
+}
+
+.ingr-area::placeholder { color: var(--muted); font-size: 12px; }
+
+.gen-btn {
+  width: 100%;
+  padding: 14px;
+  font-family: var(--font-h);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--grad-main);
+  color: #fff;
+  margin-top: 8px;
+  transition: all 0.15s;
+  box-shadow: 0 4px 20px rgba(255,107,43,0.3);
+}
+
+.gen-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(255,107,43,0.4); }
+.gen-btn:active { transform: translateY(1px); }
+
+/* ── SUGGESTIONS ── */
+.suggestions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.sug-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sug-header {
+  padding: 10px 14px;
+  font-family: var(--font-h);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sug-header.morning-h { background: rgba(255,107,43,0.12); color: var(--orange); border-bottom: 1px solid rgba(255,107,43,0.2); }
+.sug-header.afternoon-h { background: rgba(255,45,138,0.12); color: var(--pink); border-bottom: 1px solid rgba(255,45,138,0.2); }
+.sug-header.night-h { background: rgba(123,47,255,0.12); color: #b47fff; border-bottom: 1px solid rgba(123,47,255,0.2); }
+.sug-header.snack-h { background: rgba(57,255,20,0.08); color: var(--green); border-bottom: 1px solid rgba(57,255,20,0.15); }
+
+.sug-body {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--muted2);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.sug-loading {
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13px;
+}
+
+.pulse-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  background: var(--orange);
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+  margin-right: 8px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* ── WEIGHT WEEK ── */
+.weight-block {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.weight-block-title {
+  font-family: var(--font-h);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--text);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weight-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.weight-field { }
+
+.wf-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.wf-input {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-h);
+  font-size: 28px;
+  font-weight: 900;
+  width: 100%;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.wf-input:focus { border-color: var(--orange); }
+.wf-input::placeholder { color: var(--border); font-size: 18px; }
+
+.weight-delta {
+  margin-top: 12px;
+  text-align: center;
+  font-family: var(--font-h);
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+}
+
+.weight-delta.positive { color: var(--green); border-color: rgba(57,255,20,0.25); }
+.weight-delta.negative { color: var(--pink); border-color: rgba(255,45,138,0.25); }
+.weight-delta.zero { color: var(--muted); }
+
+/* ── FIELD CARD ── */
+.field-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.field-card .fc-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.field-card .fc-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-h);
+  font-size: 20px;
+  font-weight: 700;
+  width: 100%;
+  outline: none;
+  padding: 4px 0;
+}
+
+.field-card .fc-input:focus { border-bottom-color: var(--orange); }
+.field-card .fc-input::placeholder { color: var(--border); font-size: 14px; }
+
+/* ── GLOW ACCENTS ── */
+.glow-orange { text-shadow: 0 0 20px rgba(255,107,43,0.5); }
+.glow-cyan   { text-shadow: 0 0 20px rgba(0,229,255,0.5); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="site-header">
+  <div class="header-badge">🔥 PROTOCOLO ACTIVO</div>
+  <div class="site-title">
+    <span class="t1">MASA</span><br>
+    <span class="t2">SYS</span><span class="t3">TEM</span>
+  </div>
+  <div class="site-sub">60 KG → 62 KG &nbsp;·&nbsp; SUPERÁVIT CONTROLADO &nbsp;·&nbsp; 3 NODOS / DÍA</div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('registro')">📊 REGISTRO</button>
+  <button class="tab-btn" onclick="switchTab('planner')">🧠 PLANNER</button>
+</div>
+
+<!-- ══════════ PANEL: REGISTRO ══════════ -->
+<div id="panel-registro" class="panel active">
+
+  <!-- Day selector -->
+  <div class="day-strip" id="dayStrip"></div>
+
+  <!-- Week info bar -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px;">
+    <div class="field-card">
+      <div class="fc-label">📅 Semana</div>
+      <input class="fc-input" type="text" placeholder="7–13 abr" id="weekLabel">
+    </div>
+    <div class="field-card">
+      <div class="fc-label">🎯 Meta peso</div>
+      <input class="fc-input" type="text" placeholder="62 kg" id="targetWeight">
+    </div>
+  </div>
+
+  <!-- NODE CARDS -->
+  <div class="node-grid">
+
+    <!-- NODE: MAÑANA -->
+    <div class="node-card morning">
+      <div class="node-header">
+        <div class="node-icon">☀️</div>
+        <div style="flex:1">
+          <div class="node-title">MAÑANA</div>
+          <div class="node-time-label">HORA: <input class="node-time-input" type="text" placeholder="7:00" id="time-m"></div>
+        </div>
+      </div>
+      <div class="node-body">
+
+        <div class="slot-label"><div class="slot-dot"></div> COMIDA FUERTE</div>
+        <textarea class="meal-input" id="meal-morning-main" placeholder="Ej: 3 huevos revueltos, 80g avena con leche, 1 plátano…" rows="3"></textarea>
+
+        <div class="slot-divider"></div>
+
+        <div class="slot-label"><div class="slot-dot"></div> SNACK</div>
+        <textarea class="meal-input" id="meal-morning-snack" placeholder="Ej: 2 cdas crema de cacahuate + 1 manzana…" rows="2"></textarea>
+
+        <div class="macro-bar">
+          <button class="calc-btn" onclick="calcMacros('morning')">⚡ CALCULAR</button>
+          <span class="macro-loading" id="loading-morning"><span class="pulse-dot"></span>calculando…</span>
+          <span class="macro-pill m-kcal" id="mac-morning-kcal" style="display:none"></span>
+          <span class="macro-pill m-prot" id="mac-morning-prot" style="display:none"></span>
+          <span class="macro-pill m-carb" id="mac-morning-carb" style="display:none"></span>
+          <span class="macro-pill m-fat"  id="mac-morning-fat"  style="display:none"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NODE: TARDE -->
+    <div class="node-card afternoon">
+      <div class="node-header">
+        <div class="node-icon">🌤️</div>
+        <div style="flex:1">
+          <div class="node-title">TARDE</div>
+          <div class="node-time-label">HORA: <input class="node-time-input" type="text" placeholder="13:00" id="time-a"></div>
+        </div>
+      </div>
+      <div class="node-body">
+
+        <div class="slot-label"><div class="slot-dot"></div> COMIDA FUERTE</div>
+        <textarea class="meal-input" id="meal-afternoon-main" placeholder="Ej: 180g pechuga, 200g arroz integral, verduras al vapor…" rows="3"></textarea>
+
+        <div class="slot-divider"></div>
+
+        <div class="slot-label"><div class="slot-dot"></div> SNACK PRE-ENTRENO</div>
+        <textarea class="meal-input" id="meal-afternoon-snack" placeholder="Ej: 2 tortillas + 20g crema de cacahuate + 80g requesón…" rows="2"></textarea>
+
+        <div class="macro-bar">
+          <button class="calc-btn" onclick="calcMacros('afternoon')">⚡ CALCULAR</button>
+          <span class="macro-loading" id="loading-afternoon"><span class="pulse-dot"></span>calculando…</span>
+          <span class="macro-pill m-kcal" id="mac-afternoon-kcal" style="display:none"></span>
+          <span class="macro-pill m-prot" id="mac-afternoon-prot" style="display:none"></span>
+          <span class="macro-pill m-carb" id="mac-afternoon-carb" style="display:none"></span>
+          <span class="macro-pill m-fat"  id="mac-afternoon-fat"  style="display:none"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NODE: NOCHE -->
+    <div class="node-card night">
+      <div class="node-header">
+        <div class="node-icon">🌙</div>
+        <div style="flex:1">
+          <div class="node-title">NOCHE</div>
+          <div class="node-time-label">HORA: <input class="node-time-input" type="text" placeholder="20:00" id="time-n"></div>
+        </div>
+      </div>
+      <div class="node-body">
+
+        <div class="slot-label"><div class="slot-dot"></div> COMIDA FUERTE</div>
+        <textarea class="meal-input" id="meal-night-main" placeholder="Ej: 3 huevos, 2 tortillas, 40g queso, verdura cruda…" rows="3"></textarea>
+
+        <div class="slot-divider"></div>
+
+        <div class="slot-label"><div class="slot-dot"></div> SNACK NOCTURNO</div>
+        <textarea class="meal-input" id="meal-night-snack" placeholder="Ej: 1 taza de leche + 30g avena…" rows="2"></textarea>
+
+        <div class="macro-bar">
+          <button class="calc-btn" onclick="calcMacros('night')">⚡ CALCULAR</button>
+          <span class="macro-loading" id="loading-night"><span class="pulse-dot"></span>calculando…</span>
+          <span class="macro-pill m-kcal" id="mac-night-kcal" style="display:none"></span>
+          <span class="macro-pill m-prot" id="mac-night-prot" style="display:none"></span>
+          <span class="macro-pill m-carb" id="mac-night-carb" style="display:none"></span>
+          <span class="macro-pill m-fat"  id="mac-night-fat"  style="display:none"></span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /node-grid -->
+
+  <!-- DAILY TOTAL -->
+  <div class="daily-total" id="dailyTotal" style="display:none">
+    <span class="dt-label">TOTAL DÍA</span>
+    <span class="dt-pill dt-kcal" id="total-kcal">—</span>
+    <span style="color:var(--border)">·</span>
+    <span class="dt-pill dt-prot" id="total-prot">—</span>
+    <span style="color:var(--border)">·</span>
+    <span class="dt-pill dt-carb" id="total-carb">—</span>
+  </div>
+
+</div><!-- /panel-registro -->
+
+<!-- ══════════ PANEL: PLANNER ══════════ -->
+<div id="panel-planner" class="panel">
+
+  <!-- Ingredientes disponibles -->
+  <div class="ingr-card">
+    <div class="ingr-card-header">🧺 INGREDIENTES DISPONIBLES</div>
+    <textarea class="ingr-area" id="ingrList" placeholder="Escribe uno por línea:
+avena
+leche entera
+huevo
+plátano
+pollo pechuga
+arroz integral
+tortillas de maíz
+crema de cacahuate
+queso
+brócoli
+…"></textarea>
+  </div>
+
+  <button class="gen-btn" onclick="generateMealPlan()">🔥 GENERAR PLAN DE COMIDAS</button>
+
+  <div id="suggestions-area" class="suggestions-grid"></div>
+
+  <!-- PESO DE LA SEMANA -->
+  <div class="weight-block">
+    <div class="weight-block-title">⚖️ PESO SEMANAL</div>
+    <div class="weight-row">
+      <div class="weight-field">
+        <div class="wf-label">Inicio semana</div>
+        <input class="wf-input" type="number" step="0.1" placeholder="60.0" id="weightStart" oninput="calcDelta()">
+      </div>
+      <div class="weight-field">
+        <div class="wf-label">Fin de semana</div>
+        <input class="wf-input" type="number" step="0.1" placeholder="60.4" id="weightEnd" oninput="calcDelta()">
+      </div>
+    </div>
+    <div class="weight-delta zero" id="weightDelta">— kg esta semana</div>
+  </div>
+
+</div><!-- /panel-planner -->
+
+<script>
+// ── TABS ──
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── DAY PILLS ──
+const days = [
+  { short: 'LUN', label: 'LUNES', rest: false },
+  { short: 'MAR', label: 'MARTES', rest: false },
+  { short: 'MIÉ', label: 'MIÉRCOLES', rest: true },
+  { short: 'JUE', label: 'JUEVES', rest: false },
+  { short: 'VIE', label: 'VIERNES', rest: false },
+  { short: 'SÁB', label: 'SÁBADO', rest: true },
+  { short: 'DOM', label: 'DOMINGO', rest: false },
+];
+
+let activeDay = 0;
+const strip = document.getElementById('dayStrip');
+
+days.forEach((d, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'day-pill' + (d.rest ? ' rest' : '') + (i === 0 ? ' active' : '');
+  btn.innerHTML = d.short + (d.rest ? '<br><span style="font-size:9px;opacity:0.6">DESCANSO</span>' : '');
+  btn.style.lineHeight = '1.2';
+  btn.onclick = () => {
+    document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    activeDay = i;
+    // Limpiar macros del día anterior y resetear nodos
+    ['morning','afternoon','night'].forEach(node => {
+      ['kcal','prot','carb','fat'].forEach(m => {
+        const el = document.getElementById(`mac-${node}-${m}`);
+        if (el) el.style.display = 'none';
+      });
+      const loading = document.getElementById(`loading-${node}`);
+      if (loading) loading.style.display = 'none';
+    });
+    macroData['morning'] = null;
+    macroData['afternoon'] = null;
+    macroData['night'] = null;
+    document.getElementById('dailyTotal').style.display = 'none';
+  };
+  strip.appendChild(btn);
+});
+
+// ── MACRO CALCULATION ──
+const macroData = {};
+
+async function calcMacros(node) {
+  const mainVal = document.getElementById(`meal-${node}-main`).value.trim();
+  const snackVal = document.getElementById(`meal-${node}-snack`).value.trim();
+  const combined = [mainVal, snackVal].filter(Boolean).join('\n');
+  if (!combined) { alert('Escribe lo que comiste primero.'); return; }
+
+  const loadEl = document.getElementById(`loading-${node}`);
+  loadEl.style.display = 'inline-flex';
+  ['kcal','prot','carb','fat'].forEach(m => {
+    document.getElementById(`mac-${node}-${m}`).style.display = 'none';
+  });
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        system: `Eres un nutricionista deportivo experto. El usuario describe lo que comió. 
+Calcula los macros aproximados TOTALES del bloque de comida descrito.
+Responde SOLO en este formato JSON exacto sin markdown ni backticks:
+{"kcal":NUMBER,"prot":NUMBER,"carb":NUMBER,"fat":NUMBER}
+Todos los valores en números enteros. prot/carb/fat en gramos. Si hay incertidumbre, usa valores medios realistas.`,
+        messages: [{ role: 'user', content: combined }]
+      })
+    });
+
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || '{}';
+    const parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+
+    macroData[node] = parsed;
+
+    const labels = { kcal: `${parsed.kcal} kcal`, prot: `${parsed.prot}g prot`, carb: `${parsed.carb}g carb`, fat: `${parsed.fat}g grasa` };
+    ['kcal','prot','carb','fat'].forEach(m => {
+      const el = document.getElementById(`mac-${node}-${m}`);
+      el.textContent = labels[m];
+      el.style.display = 'inline-block';
+    });
+
+    updateDailyTotal();
+  } catch(e) {
+    alert('Error al calcular. Revisa conexión.');
+  } finally {
+    loadEl.style.display = 'none';
+  }
+}
+
+function updateDailyTotal() {
+  const nodes = ['morning','afternoon','night'];
+  if (!nodes.some(n => macroData[n])) return;
+
+  let kcal = 0, prot = 0, carb = 0;
+  nodes.forEach(n => {
+    if (macroData[n]) {
+      kcal += macroData[n].kcal || 0;
+      prot += macroData[n].prot || 0;
+      carb += macroData[n].carb || 0;
+    }
+  });
+
+  document.getElementById('total-kcal').textContent = `${kcal} kcal`;
+  document.getElementById('total-prot').textContent = `${prot}g prot`;
+  document.getElementById('total-carb').textContent = `${carb}g carb`;
+  document.getElementById('dailyTotal').style.display = 'flex';
+}
+
+// ── MEAL PLAN GENERATOR ──
+async function generateMealPlan() {
+  const ingrs = document.getElementById('ingrList').value.trim();
+  if (!ingrs) { alert('Escribe tus ingredientes disponibles primero.'); return; }
+
+  const area = document.getElementById('suggestions-area');
+  area.innerHTML = '<div class="sug-loading"><span class="pulse-dot"></span>Generando tu plan personalizado…</div>';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Eres un nutricionista deportivo experto en aumento de masa muscular.
+El usuario quiere ganar masa muscular de 60 a 62 kg con ~2,600 kcal/día y al menos 150g de proteína.
+Con los ingredientes disponibles, crea UN platillo concreto para cada slot. Sé específico con cantidades.
+Responde SOLO en JSON sin markdown ni backticks:
+{
+  "manana_fuerte": {"nombre":"...","descripcion":"...","macros":"~Xkcal · Xg prot · Xg carb"},
+  "manana_snack": {"nombre":"...","descripcion":"...","macros":"~Xkcal · Xg prot · Xg carb"},
+  "tarde_fuerte": {"nombre":"...","descripcion":"...","macros":"~Xkcal · Xg prot · Xg carb"},
+  "tarde_snack": {"nombre":"...","descripcion":"...","macros":"~Xkcal · Xg prot · Xg carb"},
+  "noche_fuerte": {"nombre":"...","descripcion":"...","macros":"~Xkcal · Xg prot · Xg carb"},
+  "noche_snack": {"nombre":"...","descripcion":"...","macros":"~Xkcal · Xg prot · Xg carb"}
+}`,
+        messages: [{ role: 'user', content: `Ingredientes disponibles:\n${ingrs}` }]
+      })
+    });
+
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || '{}';
+    const plan = JSON.parse(text.replace(/```json|```/g,'').trim());
+
+    const slots = [
+      { key: 'manana_fuerte',  label: '☀️ MAÑANA — COMIDA FUERTE',    cls: 'morning-h' },
+      { key: 'manana_snack',   label: '☀️ MAÑANA — SNACK',            cls: 'snack-h' },
+      { key: 'tarde_fuerte',   label: '🌤️ TARDE — COMIDA FUERTE',    cls: 'afternoon-h' },
+      { key: 'tarde_snack',    label: '🌤️ TARDE — SNACK PRE-ENTRENO', cls: 'snack-h' },
+      { key: 'noche_fuerte',   label: '🌙 NOCHE — COMIDA FUERTE',     cls: 'night-h' },
+      { key: 'noche_snack',    label: '🌙 NOCHE — SNACK NOCTURNO',    cls: 'snack-h' },
+    ];
+
+    area.innerHTML = '';
+    slots.forEach((s, i) => {
+      const item = plan[s.key];
+      if (!item) return;
+      const card = document.createElement('div');
+      card.className = 'sug-card';
+      card.style.animationDelay = `${i * 0.07}s`;
+      card.innerHTML = `
+        <div class="sug-header ${s.cls}">${s.label}</div>
+        <div class="sug-body">
+          <strong style="color:var(--text);font-size:14px;">${item.nombre}</strong>
+          <br><br>${item.descripcion}
+          <br><br><span style="color:var(--orange);font-weight:600;">${item.macros}</span>
+        </div>`;
+      area.appendChild(card);
+    });
+
+  } catch(e) {
+    area.innerHTML = '<div class="sug-loading" style="color:var(--pink)">❌ Error al generar. Intenta de nuevo.</div>';
+  }
+}
+
+// ── WEIGHT DELTA ──
+function calcDelta() {
+  const start = parseFloat(document.getElementById('weightStart').value);
+  const end = parseFloat(document.getElementById('weightEnd').value);
+  const el = document.getElementById('weightDelta');
+
+  if (isNaN(start) || isNaN(end)) {
+    el.textContent = '— kg esta semana';
+    el.className = 'weight-delta zero';
+    return;
+  }
+
+  const diff = (end - start).toFixed(1);
+  if (diff > 0) {
+    el.textContent = `+${diff} kg esta semana ↑`;
+    el.className = 'weight-delta positive';
+  } else if (diff < 0) {
+    el.textContent = `${diff} kg esta semana ↓`;
+    el.className = 'weight-delta negative';
+  } else {
+    el.textContent = `Sin cambio esta semana →`;
+    el.className = 'weight-delta zero';
+  }
+}
+</script>
+</body>
+</html>
